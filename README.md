@@ -47,12 +47,12 @@ dependencies {
 includeBuild '../mock-data-gen'
 ```
 
-## Starter 설정 (`app-custom-config.mock.sensor.*`)
+## Starter 설정 (`ees.mock.sensor.*`)
 
-`local` 또는 `dev` 프로필이 활성화된 서블릿 웹 환경에서 `app-custom-config.mock.sensor.enabled`가 `true`(기본값, 미설정 포함)일 때만 Mock 빈(`GeneratorConfig`, `DeterministicMockGenerator`, `MockSensorController`)이 등록됩니다. `prod` 등 그 외 프로필에서는 등록되지 않습니다. 엔드포인트 URI는 프로젝트의 URI 규칙에 맞게 오버라이드할 수 있습니다.
+`local` 또는 `dev` 프로필이 활성화된 서블릿 웹 환경에서 `ees.mock.sensor.enabled`가 `true`(기본값, 미설정 포함)일 때만 Mock 빈(`GeneratorConfig`, `DeterministicMockGenerator`, `MockSensorController`)이 등록됩니다. `prod` 등 그 외 프로필에서는 등록되지 않습니다. 엔드포인트 URI는 프로젝트의 URI 규칙에 맞게 오버라이드할 수 있습니다.
 
 ```yaml
-app-custom-config:
+ees:
   mock:
     sensor:
       enabled: true
@@ -105,7 +105,7 @@ GeneratorConfig config = GeneratorConfig.builder()
 DeterministicMockGenerator generator = new DeterministicMockGenerator(config, Clock.systemUTC());
 ```
 
-Spring Boot 앱에서는 `@Bean GeneratorConfig`를 등록하면 Starter의 기본 `GeneratorConfig` 빈을 대체하여 `DeterministicMockGenerator`에 주입됩니다.
+Spring Boot 앱에서는 `@Bean SensorPhysicsPreset`을 등록하면 YAML의 `ees.mock.sensor.*` 간격·한도·소수점 설정을 유지한 채 물리 프리셋만 교체할 수 있으며, `application.yml`의 `ees.mock.sensor.physics.*` 프로퍼티로도 동일한 물리 파라미터를 조정할 수 있습니다. 전체 설정을 직접 대체해야 할 때는 `@Bean GeneratorConfig` 등록도 계속 지원됩니다.
 
 ## 관련 문서
 
@@ -113,3 +113,4 @@ Spring Boot 앱에서는 `@Bean GeneratorConfig`를 등록하면 Starter의 기�
 - [GLOSSARY.md](./GLOSSARY.md)
 - [docs/adr/0001-multi-module-library-boundary.md](./docs/adr/0001-multi-module-library-boundary.md)
 - [docs/adr/0002-deterministic-noise-and-starter-customization.md](./docs/adr/0002-deterministic-noise-and-starter-customization.md)
+- [docs/adr/0003-starter-property-prefix-separation.md](./docs/adr/0003-starter-property-prefix-separation.md)

@@ -20,28 +20,45 @@ public record SensorPhysicsPreset(
 ) {
 
     public SensorPhysicsPreset {
+        if (!Double.isFinite(baselineMin) || !Double.isFinite(baselineSpan)) {
+            throw new IllegalArgumentException("baseline bounds must be finite");
+        }
         if (baselineSpan < 0) {
             throw new IllegalArgumentException("baselineSpan must be non-negative");
         }
-        if (amplitudeMin <= 0 || amplitudeSpan < 0) {
+        if (!Double.isFinite(amplitudeMin) || !Double.isFinite(amplitudeSpan)
+                || amplitudeMin <= 0 || amplitudeSpan < 0) {
             throw new IllegalArgumentException("amplitude bounds must be positive");
         }
-        if (periodMinSec <= 0 || periodModSec <= 0) {
+        if (!Double.isFinite(periodMinSec) || periodMinSec <= 0 || periodModSec <= 0) {
             throw new IllegalArgumentException("period bounds must be positive");
         }
-        if (noiseRatio < 0) {
+        if (!Double.isFinite(noiseRatio) || noiseRatio < 0) {
             throw new IllegalArgumentException("noiseRatio must be non-negative");
         }
-        if (stepDutyCycle <= 0.0 || stepDutyCycle >= 1.0) {
+        if (!Double.isFinite(stepDutyCycle) || stepDutyCycle <= 0.0 || stepDutyCycle >= 1.0) {
             throw new IllegalArgumentException("stepDutyCycle must be between 0 and 1");
         }
-        if (driftPeriodMultiplier <= 0 || driftAmplitudeMultiplier < 0) {
+        if (!Double.isFinite(driftPeriodMultiplier) || !Double.isFinite(driftAmplitudeMultiplier)
+                || driftPeriodMultiplier <= 0 || driftAmplitudeMultiplier < 0) {
             throw new IllegalArgumentException("drift multipliers must be valid");
         }
-        if (anomalyBucketSec <= 0 || anomalyThresholdPercent < 0 || anomalyThresholdPercent > 100) {
+        if (!Double.isFinite(anomalyBucketSec) || !Double.isFinite(anomalySpikeMultiplier)
+                || anomalyBucketSec <= 0 || anomalyThresholdPercent < 0
+                || anomalyThresholdPercent > 100 || anomalySpikeMultiplier < 0) {
             throw new IllegalArgumentException("anomaly parameters out of range");
         }
     }
+
+    private static final SensorPhysicsPreset DEFAULTS = new SensorPhysicsPreset(
+            20.0, 80.0,
+            2.0, 18.0,
+            300.0, 3300,
+            0.05,
+            0.65,
+            4.0, 1.5,
+            60.0, 5, 2.5
+    );
 
     /**
      * Returns the default preset matching the project specification.
@@ -49,15 +66,7 @@ public record SensorPhysicsPreset(
      * @return default physics preset
      */
     public static SensorPhysicsPreset defaults() {
-        return new SensorPhysicsPreset(
-                20.0, 80.0,
-                2.0, 18.0,
-                300.0, 3300,
-                0.05,
-                0.65,
-                4.0, 1.5,
-                60.0, 5, 2.5
-        );
+        return DEFAULTS;
     }
 
     public static Builder builder() {
@@ -65,19 +74,19 @@ public record SensorPhysicsPreset(
     }
 
     public static final class Builder {
-        private double baselineMin = 20.0;
-        private double baselineSpan = 80.0;
-        private double amplitudeMin = 2.0;
-        private double amplitudeSpan = 18.0;
-        private double periodMinSec = 300.0;
-        private int periodModSec = 3300;
-        private double noiseRatio = 0.05;
-        private double stepDutyCycle = 0.65;
-        private double driftPeriodMultiplier = 4.0;
-        private double driftAmplitudeMultiplier = 1.5;
-        private double anomalyBucketSec = 60.0;
-        private int anomalyThresholdPercent = 5;
-        private double anomalySpikeMultiplier = 2.5;
+        private double baselineMin = DEFAULTS.baselineMin();
+        private double baselineSpan = DEFAULTS.baselineSpan();
+        private double amplitudeMin = DEFAULTS.amplitudeMin();
+        private double amplitudeSpan = DEFAULTS.amplitudeSpan();
+        private double periodMinSec = DEFAULTS.periodMinSec();
+        private int periodModSec = DEFAULTS.periodModSec();
+        private double noiseRatio = DEFAULTS.noiseRatio();
+        private double stepDutyCycle = DEFAULTS.stepDutyCycle();
+        private double driftPeriodMultiplier = DEFAULTS.driftPeriodMultiplier();
+        private double driftAmplitudeMultiplier = DEFAULTS.driftAmplitudeMultiplier();
+        private double anomalyBucketSec = DEFAULTS.anomalyBucketSec();
+        private int anomalyThresholdPercent = DEFAULTS.anomalyThresholdPercent();
+        private double anomalySpikeMultiplier = DEFAULTS.anomalySpikeMultiplier();
 
         public Builder baseline(double min, double span) {
             this.baselineMin = min;

@@ -1,6 +1,6 @@
 # 0002. 결정론적 노이즈 입력 통일 및 Starter 설정 커스터마이징
 
-Status: accepted
+Status: accepted (프로퍼티 프리픽스 `app-custom-config.mock.sensor.*` 부분은 `ADR-0003`의 `ees.mock.sensor.*`로 대체됨)
 
 `프로젝트사양서.md` 4.2절 수식(`doubleToLongBits(t_sec)`)과 6.2절 레퍼런스 코드(`sensorSeed ^ timestampMs`) 간의 노이즈 해시 입력 불일치를 6.2절 기준으로 통일하고, Starter 설정 프리픽스(`app-custom-config.mock.sensor.*`) 및 엔드포인트 URI를 외부 프로젝트 규칙에 맞게 변경할 수 있도록 설계한다.
 

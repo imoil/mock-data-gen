@@ -1,8 +1,11 @@
 package com.samsung.ees.infra.mock.starter.config;
 
 import com.samsung.ees.infra.mock.core.config.GeneratorConfig;
+import com.samsung.ees.infra.mock.core.config.SensorPhysicsPreset;
 import com.samsung.ees.infra.mock.core.engine.DeterministicMockGenerator;
 import com.samsung.ees.infra.mock.starter.controller.MockSensorController;
+import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,30 +22,55 @@ import org.springframework.context.annotation.Profile;
 @Profile({"local", "dev"})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnProperty(
-        prefix = "app-custom-config.mock.sensor",
+        prefix = "ees.mock.sensor",
         name = "enabled",
         havingValue = "true",
         matchIfMissing = true
 )
-@EnableConfigurationProperties(MockSensorProperties.class)
+@EnableConfigurationProperties
 @Import(MockSensorOpenApiConfiguration.class)
 public class MockSensorAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public GeneratorConfig mockSensorGeneratorConfig(MockSensorProperties properties) {
-        return properties.toGeneratorConfig();
+    public MockSensorProperties mockSensorProperties() {
+        return new MockSensorProperties();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public DeterministicMockGenerator deterministicMockGenerator(GeneratorConfig mockSensorGeneratorConfig) {
-        return new DeterministicMockGenerator(mockSensorGeneratorConfig);
+    public SensorPhysicsPreset mockSensorPhysicsPreset(MockSensorProperties properties) {
+        return properties.toPhysicsPreset();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public MockSensorController mockSensorController(DeterministicMockGenerator deterministicMockGenerator) {
-        return new MockSensorController(deterministicMockGenerator);
+    public GeneratorConfig mockSensorGeneratorConfig(
+            MockSensorProperties properties,
+            SensorPhysicsPreset mockSensorPhysicsPreset
+    ) {
+        return properties.toGeneratorConfig(mockSensorPhysicsPreset);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DeterministicMockGenerator deterministicMockGenerator(
+            GeneratorConfig mockSensorGeneratorConfig,
+            ObjectProvider<Clock> clockProvider
+    ) {
+        return new DeterministicMockGenerator(mockSensorGeneratorConfig, resolveClock(clockProvider));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public MockSensorController mockSensorController(
+            DeterministicMockGenerator deterministicMockGenerator,
+            ObjectProvider<Clock> clockProvider
+    ) {
+        return new MockSensorController(deterministicMockGenerator, resolveClock(clockProvider));
+    }
+
+    private static Clock resolveClock(ObjectProvider<Clock> clockProvider) {
+        return clockProvider.getIfAvailable(Clock::systemUTC);
     }
 }

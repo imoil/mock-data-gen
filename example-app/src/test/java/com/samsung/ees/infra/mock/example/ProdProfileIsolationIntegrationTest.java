@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("prod")
-@TestPropertySource(properties = "app-custom-config.mock.sensor.enabled=true")
+@TestPropertySource(properties = "ees.mock.sensor.enabled=true")
 class ProdProfileIsolationIntegrationTest {
 
     @Autowired

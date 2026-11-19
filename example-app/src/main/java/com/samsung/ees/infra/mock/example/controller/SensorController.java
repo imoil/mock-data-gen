@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
  * Requests with X-Mock-Data=true in local/dev profiles are routed to MockSensorController instead.
  */
 @RestController
-@RequestMapping("${app-custom-config.mock.sensor.base-path:/api/v1/sensors}")
+@RequestMapping("${app-custom-config.sensor.base-path:/api/v1/sensors}")
 public class SensorController {
 
-    @GetMapping("${app-custom-config.mock.sensor.current-path:/current}")
+    @GetMapping("${app-custom-config.sensor.current-path:/current}")
     public ResponseEntity<Map<String, Object>> getCurrentValues(
             @RequestParam List<String> sensorIds,
             @RequestParam(required = false, defaultValue = "1000") Long intervalMs
@@ -39,7 +39,7 @@ public class SensorController {
         ));
     }
 
-    @GetMapping("${app-custom-config.mock.sensor.timeseries-path:/timeseries}")
+    @GetMapping("${app-custom-config.sensor.timeseries-path:/timeseries}")
     public ResponseEntity<Map<String, Object>> getTimeSeries(
             @RequestParam List<String> sensorIds,
             @RequestParam String from,

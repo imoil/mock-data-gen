@@ -1,4 +1,10 @@
 app-custom-config:
+  sensor:
+    base-path: /api/v1/sensors
+    current-path: /current
+    timeseries-path: /timeseries
+
+ees:
   mock:
     sensor:
       enabled: true

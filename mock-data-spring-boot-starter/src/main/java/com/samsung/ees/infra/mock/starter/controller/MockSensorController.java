@@ -4,7 +4,9 @@ import com.samsung.ees.infra.mock.core.engine.DeterministicMockGenerator;
 import com.samsung.ees.infra.mock.core.exception.InvalidMockRequestException;
 import com.samsung.ees.infra.mock.core.model.CurrentMockResponse;
 import com.samsung.ees.infra.mock.core.model.TimeSeriesMockResponse;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +22,31 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * Profile-isolated REST controller serving deterministic mock sensor data when X-Mock-Data=true.
  */
 @RestController
-@RequestMapping("${app-custom-config.mock.sensor.base-path:/api/v1/sensors}")
+@RequestMapping("#{@mockSensorProperties.basePath}")
 public class MockSensorController {
 
     public static final String MOCK_HEADER_NAME = "X-Mock-Data";
     public static final String MOCK_HEADER_CONDITION = "X-Mock-Data=true";
 
     private final DeterministicMockGenerator mockGenerator;
+    private final Clock clock;
 
     public MockSensorController(DeterministicMockGenerator mockGenerator) {
-        this.mockGenerator = mockGenerator;
+        this(mockGenerator, Clock.systemUTC());
     }
 
-    @GetMapping(value = "${app-custom-config.mock.sensor.current-path:/current}", headers = MOCK_HEADER_CONDITION)
+    public MockSensorController(DeterministicMockGenerator mockGenerator, Clock clock) {
+        if (mockGenerator == null) {
+            throw new IllegalArgumentException("mockGenerator must not be null");
+        }
+        if (clock == null) {
+            throw new IllegalArgumentException("clock must not be null");
+        }
+        this.mockGenerator = mockGenerator;
+        this.clock = clock;
+    }
+
+    @GetMapping(value = "#{@mockSensorProperties.currentPath}", headers = MOCK_HEADER_CONDITION)
     public ResponseEntity<CurrentMockResponse> getCurrentMockValues(
             @RequestParam(name = "sensorIds", required = false) List<String> sensorIds,
             @RequestParam(name = "intervalMs", required = false) Long intervalMs
@@ -40,15 +54,15 @@ public class MockSensorController {
         return ResponseEntity.ok(mockGenerator.generateCurrentValues(sensorIds, intervalMs));
     }
 
-    @GetMapping(value = "${app-custom-config.mock.sensor.timeseries-path:/timeseries}", headers = MOCK_HEADER_CONDITION)
+    @GetMapping(value = "#{@mockSensorProperties.timeseriesPath}", headers = MOCK_HEADER_CONDITION)
     public ResponseEntity<TimeSeriesMockResponse> getTimeSeriesMockValues(
             @RequestParam(name = "sensorIds", required = false) List<String> sensorIds,
             @RequestParam(name = "from") String from,
             @RequestParam(name = "to") String to,
             @RequestParam(name = "intervalMs", required = false) Long intervalMs
     ) {
-        long fromEpochMs = FlexibleTimestampParser.parseEpochMillis(from, "from");
-        long toEpochMs = FlexibleTimestampParser.parseEpochMillis(to, "to");
+        long fromEpochMs = parseEpochMillis(from, "from");
+        long toEpochMs = parseEpochMillis(to, "to");
         return ResponseEntity.ok(
                 mockGenerator.generateTimeSeries(sensorIds, fromEpochMs, toEpochMs, intervalMs)
         );
@@ -61,10 +75,7 @@ public class MockSensorController {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<MockErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
-        String message = "sensorIds".equals(ex.getParameterName())
-                ? "sensorIds must not be empty"
-                : ex.getMessage();
-        return badRequest(message);
+        return badRequest(ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -74,6 +85,24 @@ public class MockSensorController {
 
     private ResponseEntity<MockErrorResponse> badRequest(String message) {
         return ResponseEntity.badRequest()
-                .body(new MockErrorResponse(HttpStatus.BAD_REQUEST.value(), message, Instant.now()));
+                .body(new MockErrorResponse(HttpStatus.BAD_REQUEST.value(), message, clock.instant()));
+    }
+
+    private static long parseEpochMillis(String rawValue, String parameterName) {
+        if (rawValue == null || rawValue.isBlank()) {
+            throw new InvalidMockRequestException("'" + parameterName + "' timestamp must not be empty");
+        }
+        String trimmed = rawValue.trim();
+        try {
+            return Long.parseLong(trimmed);
+        } catch (NumberFormatException ignored) {
+            try {
+                return Instant.parse(trimmed).toEpochMilli();
+            } catch (DateTimeParseException ex) {
+                throw new InvalidMockRequestException(
+                        "Invalid '" + parameterName + "' timestamp format: " + rawValue
+                );
+            }
+        }
     }
 }

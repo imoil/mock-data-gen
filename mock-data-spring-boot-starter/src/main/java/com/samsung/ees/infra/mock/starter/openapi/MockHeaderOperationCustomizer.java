@@ -1,28 +1,31 @@
 package com.samsung.ees.infra.mock.starter.openapi;
 
-import com.samsung.ees.infra.mock.starter.controller.MockSensorController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import java.util.Arrays;
 import java.util.Optional;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.method.HandlerMethod;
 
 /**
- * Injects the optional X-Mock-Data header parameter into OpenAPI docs for mock endpoints only.
+ * Injects the optional X-Mock-Data header parameter into OpenAPI docs for operations routed on X-Mock-Data.
  */
 public class MockHeaderOperationCustomizer implements OperationCustomizer {
 
+    public static final String MOCK_HEADER_NAME = "X-Mock-Data";
     private static final String HEADER_DESCRIPTION =
             "Set to 'true' to route the request to deterministic mock data (local/dev only).";
 
     @Override
     public Operation customize(Operation operation, HandlerMethod handlerMethod) {
-        if (!MockSensorController.class.isAssignableFrom(handlerMethod.getBeanType())) {
+        if (!isMockRoutedOperation(handlerMethod)) {
             return operation;
         }
         Parameter parameter = findMockHeaderParameter(operation).orElseGet(() -> {
-            Parameter created = new Parameter().name(MockSensorController.MOCK_HEADER_NAME);
+            Parameter created = new Parameter().name(MOCK_HEADER_NAME);
             operation.addParametersItem(created);
             return created;
         });
@@ -30,12 +33,33 @@ public class MockHeaderOperationCustomizer implements OperationCustomizer {
         return operation;
     }
 
+    private boolean isMockRoutedOperation(HandlerMethod handlerMethod) {
+        RequestMapping mapping = AnnotatedElementUtils.findMergedAnnotation(
+                handlerMethod.getMethod(),
+                RequestMapping.class
+        );
+        if (mapping == null) {
+            return false;
+        }
+        return Arrays.stream(mapping.headers())
+                .anyMatch(MockHeaderOperationCustomizer::targetsMockHeader);
+    }
+
+    private static boolean targetsMockHeader(String headerExpression) {
+        if (headerExpression == null || headerExpression.isBlank()) {
+            return false;
+        }
+        int eqIdx = headerExpression.indexOf('=');
+        String headerName = (eqIdx >= 0 ? headerExpression.substring(0, eqIdx) : headerExpression).trim();
+        return MOCK_HEADER_NAME.equalsIgnoreCase(headerName);
+    }
+
     private Optional<Parameter> findMockHeaderParameter(Operation operation) {
         if (operation.getParameters() == null) {
             return Optional.empty();
         }
         return operation.getParameters().stream()
-                .filter(p -> MockSensorController.MOCK_HEADER_NAME.equalsIgnoreCase(p.getName()))
+                .filter(p -> MOCK_HEADER_NAME.equalsIgnoreCase(p.getName()))
                 .findFirst();
     }
 
