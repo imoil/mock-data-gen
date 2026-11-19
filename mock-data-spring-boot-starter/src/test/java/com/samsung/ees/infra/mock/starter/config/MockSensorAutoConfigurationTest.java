@@ -19,6 +19,8 @@ import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 class MockSensorAutoConfigurationTest {
 
@@ -151,6 +153,18 @@ class MockSensorAutoConfigurationTest {
                             .isInstanceOf(InvalidMockRequestException.class)
                             .hasMessage("intervalMs must be at least 250ms");
                 });
+    }
+
+    @Test
+    void doesNotRegisterAnyGlobalControllerAdviceBeans() {
+        for (String profile : new String[]{"local", "dev"}) {
+            contextRunner
+                    .withPropertyValues("spring.profiles.active=" + profile)
+                    .run(context -> {
+                        assertThat(context.getBeansWithAnnotation(ControllerAdvice.class)).isEmpty();
+                        assertThat(context.getBeansWithAnnotation(RestControllerAdvice.class)).isEmpty();
+                    });
+        }
     }
 
     @Test
