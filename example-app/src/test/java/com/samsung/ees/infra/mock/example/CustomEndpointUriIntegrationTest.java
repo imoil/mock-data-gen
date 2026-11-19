@@ -1,5 +1,6 @@
 package com.samsung.ees.infra.mock.example;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -93,5 +94,21 @@ class CustomEndpointUriIntegrationTest {
                         .param("from", "1794984000000")
                         .param("to", "1794984300000"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void exposesMockHeaderOnCustomizedEndpointsInOpenApiDocs() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v2/telemetry/latest'].get.parameters[?(@.name=='X-Mock-Data')].in")
+                        .value(hasItem("header")))
+                .andExpect(jsonPath("$.paths['/api/v2/telemetry/latest'].get.parameters[?(@.name=='X-Mock-Data')].required")
+                        .value(hasItem(false)))
+                .andExpect(jsonPath("$.paths['/api/v2/telemetry/history'].get.parameters[?(@.name=='X-Mock-Data')].in")
+                        .value(hasItem("header")))
+                .andExpect(jsonPath("$.paths['/api/v2/telemetry/history'].get.parameters[?(@.name=='X-Mock-Data')].required")
+                        .value(hasItem(false)))
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/current']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/timeseries']").doesNotExist());
     }
 }

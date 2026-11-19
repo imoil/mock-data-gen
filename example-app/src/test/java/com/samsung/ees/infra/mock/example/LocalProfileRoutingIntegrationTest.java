@@ -2,6 +2,7 @@ package com.samsung.ees.infra.mock.example;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -72,7 +73,15 @@ class LocalProfileRoutingIntegrationTest {
     void exposesMockHeaderInOpenApiDocsForLocalProfile() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("X-Mock-Data")));
+                .andExpect(content().string(containsString("X-Mock-Data")))
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/current'].get.parameters[?(@.name=='X-Mock-Data')].in")
+                        .value(hasItem("header")))
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/current'].get.parameters[?(@.name=='X-Mock-Data')].required")
+                        .value(hasItem(false)))
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/timeseries'].get.parameters[?(@.name=='X-Mock-Data')].in")
+                        .value(hasItem("header")))
+                .andExpect(jsonPath("$.paths['/api/v1/sensors/timeseries'].get.parameters[?(@.name=='X-Mock-Data')].required")
+                        .value(hasItem(false)));
     }
 
     @Test

@@ -47,6 +47,7 @@ class MockSensorAutoConfigurationTest {
                 .run(context -> {
                     assertThat(context).hasSingleBean(MockSensorController.class);
                     assertThat(context).hasSingleBean(DeterministicMockGenerator.class);
+                    assertThat(context).hasSingleBean(MockHeaderOperationCustomizer.class);
                 });
     }
 
@@ -61,6 +62,7 @@ class MockSensorAutoConfigurationTest {
                     assertThat(context).doesNotHaveBean(MockSensorController.class);
                     assertThat(context).doesNotHaveBean(DeterministicMockGenerator.class);
                     assertThat(context).doesNotHaveBean(MockHeaderOperationCustomizer.class);
+                    assertThat(context).doesNotHaveBean(OperationCustomizer.class);
                 });
     }
 
