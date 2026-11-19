@@ -1,3 +1,6 @@
+import groovy.json.JsonSlurper
+import groovy.xml.XmlSlurper
+
 plugins {
     id 'org.springframework.boot' version '3.5.16' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
@@ -22,15 +25,106 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             options.release = 21
             options.encoding = 'UTF-8'
-            options.compilerArgs.add('-parameters')
+            options.compilerArgs.addAll(['-parameters', '-Xlint:all,-processing', '-Werror'])
         }
 
         tasks.withType(Javadoc).configureEach {
             options.encoding = 'UTF-8'
+            options.addStringOption('Xdoclint:all,-missing', '-quiet')
         }
 
         tasks.withType(Test).configureEach {
             useJUnitPlatform()
+            testLogging {
+                events 'failed', 'skipped'
+            }
+            afterSuite { desc, result ->
+                if (!desc.parent) {
+                    logger.lifecycle("${project.path} tests: ${result.testCount} run, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped")
+                }
+            }
+        }
+    }
+
+    plugins.withId('maven-publish') {
+        def projectName = project.name
+        def projectGroup = project.group.toString()
+        def projectVersion = project.version.toString()
+        def buildDirProvider = layout.buildDirectory
+
+        def verifyTask = tasks.register('verifyMavenPublication') {
+            group = 'verification'
+            description = 'Verifies generated JARs, sources/javadoc JARs, POM scopes, and Gradle module metadata'
+            dependsOn 'jar', 'sourcesJar', 'javadocJar',
+                    'generatePomFileForMavenJavaPublication',
+                    'generateMetadataFileForMavenJavaPublication'
+
+            doLast {
+                def buildDir = buildDirProvider.get().asFile
+                def libsDir = new File(buildDir, 'libs')
+                ["${projectName}-${projectVersion}.jar",
+                 "${projectName}-${projectVersion}-sources.jar",
+                 "${projectName}-${projectVersion}-javadoc.jar"].each { fileName ->
+                    def artifactFile = new File(libsDir, fileName)
+                    if (!artifactFile.isFile() || artifactFile.length() == 0L) {
+                        throw new GradleException("Missing or empty publication artifact: ${artifactFile}")
+                    }
+                }
+
+                def pomFile = new File(buildDir, 'publications/mavenJava/pom-default.xml')
+                if (!pomFile.isFile()) {
+                    throw new GradleException("Missing generated POM: ${pomFile}")
+                }
+                def pom = new XmlSlurper().parse(pomFile)
+                if (pom.groupId.text() != projectGroup || pom.artifactId.text() != projectName || pom.version.text() != projectVersion) {
+                    throw new GradleException("Unexpected POM coordinates in ${pomFile}")
+                }
+
+                def deps = pom.dependencies.dependency.collect {
+                    [groupId: it.groupId.text(), artifactId: it.artifactId.text(), scope: it.scope.text()]
+                }
+                def leaked = deps.findAll {
+                    it.groupId.contains('springdoc') ||
+                            it.artifactId.contains('configuration-processor') ||
+                            it.scope == 'test'
+                }
+                if (!leaked.isEmpty()) {
+                    throw new GradleException("Unexpected leaked dependencies in ${projectName} POM: ${leaked}")
+                }
+
+                def moduleFile = new File(buildDir, 'publications/mavenJava/module.json')
+                if (!moduleFile.isFile()) {
+                    throw new GradleException("Missing generated Gradle module metadata: ${moduleFile}")
+                }
+                def moduleJson = new JsonSlurper().parse(moduleFile)
+                def apiVariant = moduleJson.variants.find { it.name == 'apiElements' }
+                def apiDeps = (apiVariant?.dependencies ?: []).collect { "${it.group}:${it.module}".toString() }
+
+                if (projectName == 'mock-data-core') {
+                    if (!deps.isEmpty()) {
+                        throw new GradleException("mock-data-core POM must have zero dependencies, found: ${deps}")
+                    }
+                    if (!apiDeps.isEmpty()) {
+                        throw new GradleException("mock-data-core apiElements must have zero dependencies, found: ${apiDeps}")
+                    }
+                } else if (projectName == 'mock-data-spring-boot-starter') {
+                    def expected = [
+                            [groupId: projectGroup, artifactId: 'mock-data-core', scope: 'compile'],
+                            [groupId: 'org.springframework.boot', artifactId: 'spring-boot-starter-web', scope: 'compile']
+                    ] as Set
+                    if ((deps as Set) != expected) {
+                        throw new GradleException("mock-data-spring-boot-starter POM dependencies mismatch. Expected ${expected}, found ${deps}")
+                    }
+                    def expectedApiDeps = ["${projectGroup}:mock-data-core".toString(), 'org.springframework.boot:spring-boot-starter-web']
+                    if (!(apiDeps as Set).containsAll(expectedApiDeps)) {
+                        throw new GradleException("mock-data-spring-boot-starter apiElements missing starter-web/core: ${apiDeps}")
+                    }
+                }
+            }
+        }
+
+        tasks.named('check').configure {
+            dependsOn verifyTask
         }
     }
 }

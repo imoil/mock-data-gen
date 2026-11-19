@@ -98,3 +98,39 @@
   - 에이전트·도메인 문서(`AGENTS.md`, `CLAUDE.md`, `GLOSSARY.md`, `docs/`, `README.md`, `프로젝트사양서.md`) 및 Gradle 3-모듈 구현(`mock-data-core`, `mock-data-spring-boot-starter`, `example-app`, `agent-log.md`)을 논리 단위 커밋으로 정리
   - `origin/main` 원격 저장소로 푸시 완료
 - **변경 파일**: `agent-log.md` (전체 작업 내역 커밋 및 푸시)
+
+
+## [2026-11-19 14:38] `/implement-spec #1` DAG 병렬 실행, `code-review` 리팩토링 및 이슈 마감
+
+- **요청**: Spec `#1`을 의존성 DAG 순서에 맞게 서브에이전트 병렬 실행으로 구현·검증
+- **수행 내용**:
+  - 통합 브랜치 `spec-1-integration` 생성 및 `explorer` 서브에이전트로 코드베이스·티켓 `#2`~`#7` 갭 감사(`exploration-notes.md`)
+  - 티켓 DAG 프론티어 순차/병렬 실행 (`#2` → `[#3, #5]` 병렬 → `[#4, #6]` 병렬 → `#7`), 각 티켓별 독립 git worktree + TDD `implementer` + `merger` 서브에이전트로 `spec-1-integration` 통합
+    - `#2` (`eac8dcf` → `b571d72`): `Clock` 주입, 5종 `MockPatternType`, `/current` ISO-8601/`epochMillis`, `dev` 프로필 `/current` 검증 보강
+    - `#3` (`17cd7ab` → `1fec963`): ISO-8601 오프셋(`+09:00`) 파싱, `local`/`dev` 시계열 슬라이딩 윈도우·`current` 일치 HTTP 통합 테스트 추가
+    - `#5` (`ed01d6a` → `05993da`): `GeneratorConfig`·`SensorPhysicsPreset` 빌더, `@ConditionalOnMissingBean`·`enabled=false`, 커스텀 URI 운영/404 라우팅 테스트 보강
+    - `#4` (`e6cbabd` → `278c943`): 유효성 경계·예외 격리(`MockSensorControllerAdviceIsolationTest`, 호스트 `@RestControllerAdvice` 격리) 및 `MockErrorResponse` 400 테스트 확장
+    - `#6` (`ba98184` → `4b87f6f`): `MockHeaderOperationCustomizer` 기존 `X-Mock-Data` 파라미터 메타데이터 보강 버그 수정 및 `local`/`dev`/커스텀 URI `/v3/api-docs`·`prod` 격리 검증
+    - `#7` (`4616e29` → `290e6a0`): `mock-data-spring-boot-starter` `spring-boot-starter-web` `api` 스코프 노출 수정, `verifyMavenPublication` 태스크 추가, 100×1,000 성능(25ms)·`mavenLocal()`/`includeBuild` 외부 소비자 스모크·`README.md` 검증
+  - 2-axis `code-review`(Standards + Spec) 실행 후 `review-fixes` (`f4883a5` → `bd442c9`)에서 `MockHeaderOperationCustomizer` 메타데이터 중복 제거 및 `AbstractProfileRoutingIntegrationTest` 공통화 완료
+  - `.\gradlew.bat clean check publishToMavenLocal` 통과(총 64건 테스트 통과: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18) 확인 후 GitHub Issues `#1`~`#7` 해결 코멘트 등록 및 종료, 임시 워크트리·임시 브랜치 정리
+- **변경 파일**: `README.md`, `build.gradle`, `mock-data-spring-boot-starter/build.gradle`, `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/openapi/MockHeaderOperationCustomizer.java`, `mock-data-core/src/test/...`, `mock-data-spring-boot-starter/src/test/...`, `example-app/src/test/...`, `agent-log.md`
+
+## [2026-11-19 15:12] `/ask-matt` 현재 진행 현황 및 다음 단계 안내
+
+- **요청**: `/ask-matt` 기준 현재 워크플로우 현황 설명
+- **수행 내용**:
+  - `ask-matt`, `retro`, `pr`, `improve-codebase-architecture` 스킬 지침과 현재 `git branch`/`gh pr list` 상태(`spec-1-integration` `70235c5`, `main` `6de0cea`, 오픈 PR 없음) 확인
+  - main flow(`idea → ship`) 기준 완료 단계(`/setup-matt-pocock-skills` → `/grill-with-docs` → `/to-spec` → `/to-tickets` → `/implement-spec #1` + `/tdd` + `/code-review`)와 미반영 상태(`spec-1-integration`의 `main` 병합·원격 푸시 전), 그리고 마지막 마무리 단계인 `/retro` 및 `/pr`·후속 흐름을 한글로 정리해 안내
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 15:16] `/retro` 세션 회고 및 에이전트 환경·가드레일 반영
+
+- **요청**: `/retro` 회고 진행 및 권장 사항 반영
+- **수행 내용**:
+  - `writing-for-agents` 기준으로 세션 로그 및 저장소 가드레일 점검 후 우선순위별 개선안 도출·반영
+  - **Automated checks / CI**: `gradlew` 실행 권한(`100644` → `100755`) 복구, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 추가, `build.gradle`에 `-Xlint:all,-processing -Werror`·`Javadoc -Xdoclint:all,-missing -quiet`·테스트 요약 로그(`afterSuite`) 적용 및 `MockPatternType` 불필요 캐스트·`InvalidMockRequestException` `serialVersionUID` 경고 수정
+  - **Coding standards**: 리뷰 전용 판단 기준을 담은 `CODING_STANDARDS.md` 신규 작성 (`mock-data-core` 순수성, Starter 격리, `GLOSSARY.md`/ADR 정합성, 테스트 심, `agent-log.md` 리뷰 스코프 명시)
+  - **Navigation & Worktree**: `AGENTS.md`에 모듈·검증 명령·`CODING_STANDARDS.md` 포인터, 병렬 서브에이전트 시 `agent-log.md` 코디네이터 일괄 기록 원칙, Windows `MAX_PATH` 회피용 짧은 워크트리 경로 규칙 추가
+  - `.\gradlew.bat clean check javadoc publishToMavenLocal --console=plain` 실행 확인 (`BUILD SUCCESSFUL`: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18, 총 64건 전원 통과)
+- **변경 파일**: `AGENTS.md`, `CODING_STANDARDS.md`, `.github/workflows/ci.yml`, `build.gradle`, `gradlew` (executable bit), `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/domain/MockPatternType.java`, `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/exception/InvalidMockRequestException.java`, `agent-log.md`

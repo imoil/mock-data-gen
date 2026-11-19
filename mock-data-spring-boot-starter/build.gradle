@@ -17,8 +17,8 @@ dependencyManagement {
 
 dependencies {
     api project(':mock-data-core')
+    api 'org.springframework.boot:spring-boot-starter-web'
 
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     compileOnly 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.15'
