@@ -59,26 +59,72 @@ class MockSensorControllerTest {
 
     @Test
     void acceptsIso8601AndEpochMillisTimestamps() throws Exception {
-        mockMvc.perform(get("/api/v1/sensors/timeseries")
+        MvcResult isoUtcResult = mockMvc.perform(get("/api/v1/sensors/timeseries")
                         .header("X-Mock-Data", "true")
                         .param("sensorIds", "TEMP-01,PRESS-02")
                         .param("from", "2026-11-18T06:40:00Z")
                         .param("to", "2026-11-18T07:40:00Z")
                         .param("intervalMs", "60000"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-11-18T06:40:00Z"))
+                .andExpect(jsonPath("$.to").value("2026-11-18T07:40:00Z"))
+                .andExpect(jsonPath("$.intervalMs").value(60000))
                 .andExpect(jsonPath("$.mock").value(true))
-                .andExpect(jsonPath("$.series.length()").value(2));
+                .andExpect(jsonPath("$.series.length()").value(2))
+                .andExpect(jsonPath("$.series[0].sensorId").value("TEMP-01"))
+                .andExpect(jsonPath("$.series[0].pattern").isNotEmpty())
+                .andExpect(jsonPath("$.series[0].points.length()").value(61))
+                .andExpect(jsonPath("$.series[0].points[0].timestamp").value(1794984000000L))
+                .andExpect(jsonPath("$.series[0].points[0].value").isNumber())
+                .andReturn();
 
-        mockMvc.perform(get("/api/v1/sensors/timeseries")
+        MvcResult epochResult = mockMvc.perform(get("/api/v1/sensors/timeseries")
                         .header("X-Mock-Data", "true")
-                        .param("sensorIds", "TEMP-01")
+                        .param("sensorIds", "TEMP-01,PRESS-02")
                         .param("from", "1794984000000")
                         .param("to", "1794987600000")
                         .param("intervalMs", "60000"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-11-18T06:40:00Z"))
+                .andExpect(jsonPath("$.to").value("2026-11-18T07:40:00Z"))
+                .andExpect(jsonPath("$.intervalMs").value(60000))
                 .andExpect(jsonPath("$.mock").value(true))
                 .andExpect(jsonPath("$.series[0].sensorId").value("TEMP-01"))
-                .andExpect(jsonPath("$.series[0].points[0].timestamp").value(1794984000000L));
+                .andExpect(jsonPath("$.series[0].points[0].timestamp").value(1794984000000L))
+                .andReturn();
+
+        assertThat(epochResult.getResponse().getContentAsString())
+                .isEqualTo(isoUtcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    void acceptsIso8601OffsetTimestampsAndMatchesUtcEquivalent() throws Exception {
+        MvcResult utcResult = mockMvc.perform(get("/api/v1/sensors/timeseries")
+                        .header("X-Mock-Data", "true")
+                        .param("sensorIds", "TEMP-01,PRESS-02")
+                        .param("from", "2026-11-18T06:40:00.500Z")
+                        .param("to", "2026-11-18T06:45:00Z")
+                        .param("intervalMs", "60000"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MvcResult offsetResult = mockMvc.perform(get("/api/v1/sensors/timeseries")
+                        .header("X-Mock-Data", "true")
+                        .param("sensorIds", "TEMP-01,PRESS-02")
+                        .param("from", "2026-11-18T15:40:00.500+09:00")
+                        .param("to", "2026-11-18T15:45:00+09:00")
+                        .param("intervalMs", "60000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.from").value("2026-11-18T06:40:00.500Z"))
+                .andExpect(jsonPath("$.to").value("2026-11-18T06:45:00Z"))
+                .andExpect(jsonPath("$.intervalMs").value(60000))
+                .andExpect(jsonPath("$.mock").value(true))
+                .andExpect(jsonPath("$.series.length()").value(2))
+                .andExpect(jsonPath("$.series[0].points.length()").value(5))
+                .andReturn();
+
+        assertThat(offsetResult.getResponse().getContentAsString())
+                .isEqualTo(utcResult.getResponse().getContentAsString());
     }
 
     @Test
