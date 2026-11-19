@@ -21,27 +21,25 @@ public class MockHeaderOperationCustomizer implements OperationCustomizer {
         if (!MockSensorController.class.isAssignableFrom(handlerMethod.getBeanType())) {
             return operation;
         }
-        Optional<Parameter> existing = operation.getParameters() == null
-                ? Optional.empty()
-                : operation.getParameters().stream()
-                        .filter(p -> MockSensorController.MOCK_HEADER_NAME.equalsIgnoreCase(p.getName()))
-                        .findFirst();
-
-        if (existing.isPresent()) {
-            enrichExistingParameter(existing.get());
-        } else {
-            operation.addParametersItem(new Parameter()
-                    .in("header")
-                    .name(MockSensorController.MOCK_HEADER_NAME)
-                    .description(HEADER_DESCRIPTION)
-                    .required(false)
-                    .schema(new StringSchema()._default("true"))
-                    .example("true"));
-        }
+        Parameter parameter = findMockHeaderParameter(operation).orElseGet(() -> {
+            Parameter created = new Parameter().name(MockSensorController.MOCK_HEADER_NAME);
+            operation.addParametersItem(created);
+            return created;
+        });
+        applyDefaultMetadata(parameter);
         return operation;
     }
 
-    private void enrichExistingParameter(Parameter parameter) {
+    private Optional<Parameter> findMockHeaderParameter(Operation operation) {
+        if (operation.getParameters() == null) {
+            return Optional.empty();
+        }
+        return operation.getParameters().stream()
+                .filter(p -> MockSensorController.MOCK_HEADER_NAME.equalsIgnoreCase(p.getName()))
+                .findFirst();
+    }
+
+    private void applyDefaultMetadata(Parameter parameter) {
         if (parameter.getIn() == null) {
             parameter.setIn("header");
         }
