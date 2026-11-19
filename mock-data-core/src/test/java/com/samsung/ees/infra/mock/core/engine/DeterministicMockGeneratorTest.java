@@ -3,11 +3,14 @@ package com.samsung.ees.infra.mock.core.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.samsung.ees.infra.mock.core.config.GeneratorConfig;
 import com.samsung.ees.infra.mock.core.exception.InvalidMockRequestException;
 import com.samsung.ees.infra.mock.core.model.CurrentMockResponse;
 import com.samsung.ees.infra.mock.core.model.TimeSeriesMockResponse;
 import com.samsung.ees.infra.mock.core.model.TimeSeriesPoint;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,6 +20,41 @@ import org.junit.jupiter.api.Test;
 class DeterministicMockGeneratorTest {
 
     private final DeterministicMockGenerator generator = new DeterministicMockGenerator();
+
+    @Test
+    void usesInjectedClockAndDefaultIntervalWhenGeneratingCurrentValues() {
+        Instant fixedInstant = Instant.parse("2026-11-19T05:11:52.789Z");
+        Clock fixedClock = Clock.fixed(fixedInstant, ZoneOffset.UTC);
+        DeterministicMockGenerator clockGenerator =
+                new DeterministicMockGenerator(GeneratorConfig.defaults(), fixedClock);
+
+        CurrentMockResponse first = clockGenerator.generateCurrentValues(List.of("TEMP-01", "PRESS-02"), null);
+        CurrentMockResponse second = clockGenerator.generateCurrentValues(List.of("TEMP-01", "PRESS-02"), null);
+        CurrentMockResponse explicit = clockGenerator.generateCurrentValues(
+                List.of("TEMP-01", "PRESS-02"),
+                1000L,
+                fixedInstant.toEpochMilli()
+        );
+
+        assertThat(first).isEqualTo(second);
+        assertThat(first).isEqualTo(explicit);
+        assertThat(first.mock()).isTrue();
+        assertThat(first.timestamp()).isEqualTo(Instant.parse("2026-11-19T05:11:52Z"));
+        assertThat(first.epochMillis()).isEqualTo(Instant.parse("2026-11-19T05:11:52Z").toEpochMilli());
+        assertThat(first.sensors()).hasSize(2);
+
+        CurrentMockResponse fiveSecAligned =
+                clockGenerator.generateCurrentValues(List.of("TEMP-01"), 5000L);
+        assertThat(fiveSecAligned.timestamp()).isEqualTo(Instant.parse("2026-11-19T05:11:50Z"));
+        assertThat(fiveSecAligned.epochMillis()).isEqualTo(Instant.parse("2026-11-19T05:11:50Z").toEpochMilli());
+
+        assertThatThrownBy(() -> new DeterministicMockGenerator(null, fixedClock))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("config must not be null");
+        assertThatThrownBy(() -> new DeterministicMockGenerator(GeneratorConfig.defaults(), null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("clock must not be null");
+    }
 
     @Test
     void currentAndTimeSeriesMatchBitForBitAtSameQuantizedTimestamp() {
