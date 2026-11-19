@@ -181,6 +181,7 @@ class DeterministicMockGeneratorTest {
 
         assertThat(response.series()).hasSize(100);
         assertThat(response.series().get(0).points()).hasSize(1000);
+        System.out.printf("100x1000 generation elapsed: %d ms%n", elapsedMs);
         assertThat(elapsedMs).isLessThan(1000L);
     }
 
