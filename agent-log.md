@@ -115,3 +115,22 @@
   - 2-axis `code-review`(Standards + Spec) 실행 후 `review-fixes` (`f4883a5` → `bd442c9`)에서 `MockHeaderOperationCustomizer` 메타데이터 중복 제거 및 `AbstractProfileRoutingIntegrationTest` 공통화 완료
   - `.\gradlew.bat clean check publishToMavenLocal` 통과(총 64건 테스트 통과: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18) 확인 후 GitHub Issues `#1`~`#7` 해결 코멘트 등록 및 종료, 임시 워크트리·임시 브랜치 정리
 - **변경 파일**: `README.md`, `build.gradle`, `mock-data-spring-boot-starter/build.gradle`, `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/openapi/MockHeaderOperationCustomizer.java`, `mock-data-core/src/test/...`, `mock-data-spring-boot-starter/src/test/...`, `example-app/src/test/...`, `agent-log.md`
+
+## [2026-11-19 15:12] `/ask-matt` 현재 진행 현황 및 다음 단계 안내
+
+- **요청**: `/ask-matt` 기준 현재 워크플로우 현황 설명
+- **수행 내용**:
+  - `ask-matt`, `retro`, `pr`, `improve-codebase-architecture` 스킬 지침과 현재 `git branch`/`gh pr list` 상태(`spec-1-integration` `70235c5`, `main` `6de0cea`, 오픈 PR 없음) 확인
+  - main flow(`idea → ship`) 기준 완료 단계(`/setup-matt-pocock-skills` → `/grill-with-docs` → `/to-spec` → `/to-tickets` → `/implement-spec #1` + `/tdd` + `/code-review`)와 미반영 상태(`spec-1-integration`의 `main` 병합·원격 푸시 전), 그리고 마지막 마무리 단계인 `/retro` 및 `/pr`·후속 흐름을 한글로 정리해 안내
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 15:16] `/retro` 세션 회고 및 에이전트 환경·가드레일 반영
+
+- **요청**: `/retro` 회고 진행 및 권장 사항 반영
+- **수행 내용**:
+  - `writing-for-agents` 기준으로 세션 로그 및 저장소 가드레일 점검 후 우선순위별 개선안 도출·반영
+  - **Automated checks / CI**: `gradlew` 실행 권한(`100644` → `100755`) 복구, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 추가, `build.gradle`에 `-Xlint:all,-processing -Werror`·`Javadoc -Xdoclint:all,-missing -quiet`·테스트 요약 로그(`afterSuite`) 적용 및 `MockPatternType` 불필요 캐스트·`InvalidMockRequestException` `serialVersionUID` 경고 수정
+  - **Coding standards**: 리뷰 전용 판단 기준을 담은 `CODING_STANDARDS.md` 신규 작성 (`mock-data-core` 순수성, Starter 격리, `GLOSSARY.md`/ADR 정합성, 테스트 심, `agent-log.md` 리뷰 스코프 명시)
+  - **Navigation & Worktree**: `AGENTS.md`에 모듈·검증 명령·`CODING_STANDARDS.md` 포인터, 병렬 서브에이전트 시 `agent-log.md` 코디네이터 일괄 기록 원칙, Windows `MAX_PATH` 회피용 짧은 워크트리 경로 규칙 추가
+  - `.\gradlew.bat clean check javadoc publishToMavenLocal --console=plain` 실행 확인 (`BUILD SUCCESSFUL`: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18, 총 64건 전원 통과)
+- **변경 파일**: `AGENTS.md`, `CODING_STANDARDS.md`, `.github/workflows/ci.yml`, `build.gradle`, `gradlew` (executable bit), `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/domain/MockPatternType.java`, `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/exception/InvalidMockRequestException.java`, `agent-log.md`

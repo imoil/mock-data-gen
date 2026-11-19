@@ -19,7 +19,7 @@ public enum MockPatternType {
      * @return deterministic pattern type
      */
     public static MockPatternType fromHash(long patternHash) {
-        int index = (int) Math.floorMod(patternHash, VALUES.length);
+        int index = Math.floorMod(patternHash, VALUES.length);
         return VALUES[index];
     }
 }

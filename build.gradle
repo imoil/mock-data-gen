@@ -25,15 +25,24 @@ subprojects {
         tasks.withType(JavaCompile).configureEach {
             options.release = 21
             options.encoding = 'UTF-8'
-            options.compilerArgs.add('-parameters')
+            options.compilerArgs.addAll(['-parameters', '-Xlint:all,-processing', '-Werror'])
         }
 
         tasks.withType(Javadoc).configureEach {
             options.encoding = 'UTF-8'
+            options.addStringOption('Xdoclint:all,-missing', '-quiet')
         }
 
         tasks.withType(Test).configureEach {
             useJUnitPlatform()
+            testLogging {
+                events 'failed', 'skipped'
+            }
+            afterSuite { desc, result ->
+                if (!desc.parent) {
+                    logger.lifecycle("${project.path} tests: ${result.testCount} run, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped")
+                }
+            }
         }
     }
 
