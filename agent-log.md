@@ -98,3 +98,20 @@
   - 에이전트·도메인 문서(`AGENTS.md`, `CLAUDE.md`, `GLOSSARY.md`, `docs/`, `README.md`, `프로젝트사양서.md`) 및 Gradle 3-모듈 구현(`mock-data-core`, `mock-data-spring-boot-starter`, `example-app`, `agent-log.md`)을 논리 단위 커밋으로 정리
   - `origin/main` 원격 저장소로 푸시 완료
 - **변경 파일**: `agent-log.md` (전체 작업 내역 커밋 및 푸시)
+
+
+## [2026-11-19 14:38] `/implement-spec #1` DAG 병렬 실행, `code-review` 리팩토링 및 이슈 마감
+
+- **요청**: Spec `#1`을 의존성 DAG 순서에 맞게 서브에이전트 병렬 실행으로 구현·검증
+- **수행 내용**:
+  - 통합 브랜치 `spec-1-integration` 생성 및 `explorer` 서브에이전트로 코드베이스·티켓 `#2`~`#7` 갭 감사(`exploration-notes.md`)
+  - 티켓 DAG 프론티어 순차/병렬 실행 (`#2` → `[#3, #5]` 병렬 → `[#4, #6]` 병렬 → `#7`), 각 티켓별 독립 git worktree + TDD `implementer` + `merger` 서브에이전트로 `spec-1-integration` 통합
+    - `#2` (`eac8dcf` → `b571d72`): `Clock` 주입, 5종 `MockPatternType`, `/current` ISO-8601/`epochMillis`, `dev` 프로필 `/current` 검증 보강
+    - `#3` (`17cd7ab` → `1fec963`): ISO-8601 오프셋(`+09:00`) 파싱, `local`/`dev` 시계열 슬라이딩 윈도우·`current` 일치 HTTP 통합 테스트 추가
+    - `#5` (`ed01d6a` → `05993da`): `GeneratorConfig`·`SensorPhysicsPreset` 빌더, `@ConditionalOnMissingBean`·`enabled=false`, 커스텀 URI 운영/404 라우팅 테스트 보강
+    - `#4` (`e6cbabd` → `278c943`): 유효성 경계·예외 격리(`MockSensorControllerAdviceIsolationTest`, 호스트 `@RestControllerAdvice` 격리) 및 `MockErrorResponse` 400 테스트 확장
+    - `#6` (`ba98184` → `4b87f6f`): `MockHeaderOperationCustomizer` 기존 `X-Mock-Data` 파라미터 메타데이터 보강 버그 수정 및 `local`/`dev`/커스텀 URI `/v3/api-docs`·`prod` 격리 검증
+    - `#7` (`4616e29` → `290e6a0`): `mock-data-spring-boot-starter` `spring-boot-starter-web` `api` 스코프 노출 수정, `verifyMavenPublication` 태스크 추가, 100×1,000 성능(25ms)·`mavenLocal()`/`includeBuild` 외부 소비자 스모크·`README.md` 검증
+  - 2-axis `code-review`(Standards + Spec) 실행 후 `review-fixes` (`f4883a5` → `bd442c9`)에서 `MockHeaderOperationCustomizer` 메타데이터 중복 제거 및 `AbstractProfileRoutingIntegrationTest` 공통화 완료
+  - `.\gradlew.bat clean check publishToMavenLocal` 통과(총 64건 테스트 통과: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18) 확인 후 GitHub Issues `#1`~`#7` 해결 코멘트 등록 및 종료, 임시 워크트리·임시 브랜치 정리
+- **변경 파일**: `README.md`, `build.gradle`, `mock-data-spring-boot-starter/build.gradle`, `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/openapi/MockHeaderOperationCustomizer.java`, `mock-data-core/src/test/...`, `mock-data-spring-boot-starter/src/test/...`, `example-app/src/test/...`, `agent-log.md`
