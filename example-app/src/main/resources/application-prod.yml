@@ -1,0 +1,1 @@
+# prod 프로필에서는 app-custom-config.mock.sensor 설정을 포함하지 않으며 Mock 빈이 로드되지 않는다.

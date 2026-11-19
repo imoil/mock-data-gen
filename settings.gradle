@@ -1,0 +1,5 @@
+rootProject.name = 'mock-data-gen'
+
+include 'mock-data-core'
+include 'mock-data-spring-boot-starter'
+include 'example-app'

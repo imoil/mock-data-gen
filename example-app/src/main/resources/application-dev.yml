@@ -1,0 +1,12 @@
+app-custom-config:
+  mock:
+    sensor:
+      enabled: true
+      base-path: /api/v1/sensors
+      current-path: /current
+      timeseries-path: /timeseries
+      default-current-interval-ms: 1000
+      default-series-interval-ms: 10000
+      min-interval-ms: 100
+      max-points-per-sensor: 10000
+      decimal-scale: 2

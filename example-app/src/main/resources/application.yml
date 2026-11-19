@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: sensor-example-app
+  profiles:
+    default: local

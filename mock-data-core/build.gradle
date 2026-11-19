@@ -1,0 +1,28 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'Mock Data Core'
+                description = 'Stateless deterministic sensor mock data generation engine'
+            }
+        }
+    }
+}
