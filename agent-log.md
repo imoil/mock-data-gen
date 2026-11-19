@@ -134,3 +134,12 @@
   - **Navigation & Worktree**: `AGENTS.md`에 모듈·검증 명령·`CODING_STANDARDS.md` 포인터, 병렬 서브에이전트 시 `agent-log.md` 코디네이터 일괄 기록 원칙, Windows `MAX_PATH` 회피용 짧은 워크트리 경로 규칙 추가
   - `.\gradlew.bat clean check javadoc publishToMavenLocal --console=plain` 실행 확인 (`BUILD SUCCESSFUL`: `mock-data-core` 26, `mock-data-spring-boot-starter` 20, `example-app` 18, 총 64건 전원 통과)
 - **변경 파일**: `AGENTS.md`, `CODING_STANDARDS.md`, `.github/workflows/ci.yml`, `build.gradle`, `gradlew` (executable bit), `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/domain/MockPatternType.java`, `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/exception/InvalidMockRequestException.java`, `agent-log.md`
+
+## [2026-11-19 15:26] `/pr` PR `#8` 작성, GitHub Actions CI 통과 확인 및 `main` 병합 완료
+
+- **요청**: `/pr` 형식으로 PR 작성 후 병합에 문제가 없으면 병합 진행
+- **수행 내용**:
+  - `spec-1-integration`(`bbc636e`)을 `origin`에 푸시하고 `/pr` 템플릿(`Summary`, `Evidence`, `Merge Danger`)으로 PR `#8` 생성
+  - GitHub Actions CI(`check`, `ubuntu-latest`) 통과(push `1m9s`, PR `1m24s`) 및 `MERGEABLE`/`CLEAN` 상태 확인
+  - PR `#8`을 `main`으로 병합(`f86783f`, `spec-1-integration` 브랜치 삭제 및 로컬 `main` fast-forward 동기화)
+- **변경 파일**: `agent-log.md` (외부 반영: PR `#8` 생성 및 `main` 병합)
