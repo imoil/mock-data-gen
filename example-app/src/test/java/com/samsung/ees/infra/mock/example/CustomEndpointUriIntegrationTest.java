@@ -36,7 +36,8 @@ class CustomEndpointUriIntegrationTest {
         mockMvc.perform(get("/api/v2/telemetry/latest")
                         .param("sensorIds", "TEMP-01"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mock").value(false));
+                .andExpect(jsonPath("$.mock").value(false))
+                .andExpect(jsonPath("$.sensors[0].source").value("LIVE_STORE"));
 
         mockMvc.perform(get("/api/v2/telemetry/history")
                         .header("X-Mock-Data", "true")
@@ -47,5 +48,50 @@ class CustomEndpointUriIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mock").value(true))
                 .andExpect(jsonPath("$.series[0].points.length()").value(6));
+
+        mockMvc.perform(get("/api/v2/telemetry/history")
+                        .param("sensorIds", "TEMP-01")
+                        .param("from", "1794984000000")
+                        .param("to", "1794984300000")
+                        .param("intervalMs", "60000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mock").value(false))
+                .andExpect(jsonPath("$.series[0].sensorId").value("TEMP-01"))
+                .andExpect(jsonPath("$.series[0].source").value("LIVE_STORE"))
+                .andExpect(jsonPath("$.series[0].points").isEmpty());
+
+        mockMvc.perform(get("/api/v2/telemetry/history")
+                        .header("X-Mock-Data", "false")
+                        .param("sensorIds", "TEMP-01")
+                        .param("from", "1794984000000")
+                        .param("to", "1794984300000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mock").value(false))
+                .andExpect(jsonPath("$.series[0].source").value("LIVE_STORE"));
+    }
+
+    @Test
+    void returnsNotFoundOnDefaultEndpointsWhenUrisAreOverridden() throws Exception {
+        mockMvc.perform(get("/api/v1/sensors/current")
+                        .header("X-Mock-Data", "true")
+                        .param("sensorIds", "TEMP-01"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/sensors/current")
+                        .param("sensorIds", "TEMP-01"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/sensors/timeseries")
+                        .header("X-Mock-Data", "true")
+                        .param("sensorIds", "TEMP-01")
+                        .param("from", "1794984000000")
+                        .param("to", "1794984300000"))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(get("/api/v1/sensors/timeseries")
+                        .param("sensorIds", "TEMP-01")
+                        .param("from", "1794984000000")
+                        .param("to", "1794984300000"))
+                .andExpect(status().isNotFound());
     }
 }
