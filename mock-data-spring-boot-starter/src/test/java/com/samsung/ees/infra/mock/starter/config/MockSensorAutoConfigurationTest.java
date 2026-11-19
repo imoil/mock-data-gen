@@ -11,6 +11,8 @@ import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 class MockSensorAutoConfigurationTest {
 
@@ -97,5 +99,17 @@ class MockSensorAutoConfigurationTest {
                     assertThat(props.getMinIntervalMs()).isEqualTo(250L);
                     assertThat(props.getDecimalScale()).isEqualTo(4);
                 });
+    }
+
+    @Test
+    void doesNotRegisterAnyGlobalControllerAdviceBeans() {
+        for (String profile : new String[]{"local", "dev"}) {
+            contextRunner
+                    .withPropertyValues("spring.profiles.active=" + profile)
+                    .run(context -> {
+                        assertThat(context.getBeansWithAnnotation(ControllerAdvice.class)).isEmpty();
+                        assertThat(context.getBeansWithAnnotation(RestControllerAdvice.class)).isEmpty();
+                    });
+        }
     }
 }

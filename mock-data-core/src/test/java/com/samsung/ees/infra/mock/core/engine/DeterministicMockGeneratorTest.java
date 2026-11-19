@@ -112,6 +112,10 @@ class DeterministicMockGeneratorTest {
 
     @Test
     void validatesEmptySensorsTimeRangeMinIntervalAndMaxPoints() {
+        assertThatThrownBy(() -> generator.generateCurrentValues(null, 1000L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("sensorIds must not be empty");
+
         assertThatThrownBy(() -> generator.generateCurrentValues(List.of(), 1000L, 1000L))
                 .isInstanceOf(InvalidMockRequestException.class)
                 .hasMessage("sensorIds must not be empty");
@@ -120,7 +124,19 @@ class DeterministicMockGeneratorTest {
                 .isInstanceOf(InvalidMockRequestException.class)
                 .hasMessage("sensorIds must not be empty");
 
+        assertThatThrownBy(() -> generator.generateCurrentValues(List.of("TEMP-01", " "), 1000L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("sensorIds must not be empty");
+
+        assertThatThrownBy(() -> generator.generateTimeSeries(List.of("TEMP-01", ""), 0L, 10_000L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("sensorIds must not be empty");
+
         assertThatThrownBy(() -> generator.generateCurrentValues(List.of("S1"), 50L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("intervalMs must be at least 100ms");
+
+        assertThatThrownBy(() -> generator.generateTimeSeries(List.of("S1"), 0L, 10_000L, 99L))
                 .isInstanceOf(InvalidMockRequestException.class)
                 .hasMessage("intervalMs must be at least 100ms");
 
@@ -128,9 +144,25 @@ class DeterministicMockGeneratorTest {
                 .isInstanceOf(InvalidMockRequestException.class)
                 .hasMessage("'from' timestamp must be before 'to'");
 
+        assertThatThrownBy(() -> generator.generateTimeSeries(List.of("S1"), 3000L, 2000L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("'from' timestamp must be before 'to'");
+
         assertThatThrownBy(() -> generator.generateTimeSeries(List.of("S1"), 0L, 10_001_000L, 1000L))
                 .isInstanceOf(InvalidMockRequestException.class)
                 .hasMessage("Requested points exceed maximum limit (10000)");
+    }
+
+    @Test
+    void allowsExactMaxPointsRatioBoundaryWithInclusiveGridEndpoints() {
+        // (to - from) / intervalMs == 10_000 == maxPointsPerSensor is allowed per Ticket #4 AC1
+        TimeSeriesMockResponse atBoundary = generator.generateTimeSeries(List.of("S1"), 0L, 10_000_000L, 1000L);
+
+        assertThat(atBoundary.series()).hasSize(1);
+        List<TimeSeriesPoint> points = atBoundary.series().get(0).points();
+        assertThat(points).hasSize(10_001);
+        assertThat(points.get(0).timestamp()).isZero();
+        assertThat(points.get(points.size() - 1).timestamp()).isEqualTo(10_000_000L);
     }
 
     @Test
