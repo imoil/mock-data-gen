@@ -2,14 +2,11 @@ package com.samsung.ees.infra.mock.starter.openapi;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.samsung.ees.infra.mock.core.config.GeneratorConfig;
-import com.samsung.ees.infra.mock.core.engine.DeterministicMockGenerator;
-import com.samsung.ees.infra.mock.starter.controller.MockSensorController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import java.lang.reflect.Method;
-import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.method.HandlerMethod;
 
 class MockHeaderOperationCustomizerTest {
@@ -17,26 +14,16 @@ class MockHeaderOperationCustomizerTest {
     private final MockHeaderOperationCustomizer customizer = new MockHeaderOperationCustomizer();
 
     @Test
-    void addsOptionalHeaderParameterForMockSensorControllerMethods() throws NoSuchMethodException {
-        MockSensorController controller = new MockSensorController(
-                new DeterministicMockGenerator(GeneratorConfig.defaults())
-        );
-        Method currentMethod = MockSensorController.class.getMethod("getCurrentMockValues", List.class, Long.class);
-        Method seriesMethod = MockSensorController.class.getMethod(
-                "getTimeSeriesMockValues",
-                List.class,
-                String.class,
-                String.class,
-                Long.class
-        );
-
-        for (Method method : List.of(currentMethod, seriesMethod)) {
+    void addsOptionalHeaderParameterForMockRoutedOperations() throws NoSuchMethodException {
+        MockDummyController mockController = new MockDummyController();
+        for (String methodName : new String[]{"current", "timeseries"}) {
+            Method method = MockDummyController.class.getMethod(methodName);
             Operation operation = new Operation();
-            customizer.customize(operation, new HandlerMethod(controller, method));
+            customizer.customize(operation, new HandlerMethod(mockController, method));
 
             assertThat(operation.getParameters()).hasSize(1);
             Parameter headerParam = operation.getParameters().get(0);
-            assertThat(headerParam.getName()).isEqualTo(MockSensorController.MOCK_HEADER_NAME);
+            assertThat(headerParam.getName()).isEqualTo(MockHeaderOperationCustomizer.MOCK_HEADER_NAME);
             assertThat(headerParam.getIn()).isEqualTo("header");
             assertThat(headerParam.getRequired()).isFalse();
             assertThat(headerParam.getExample()).isEqualTo("true");
@@ -47,11 +34,9 @@ class MockHeaderOperationCustomizerTest {
 
     @Test
     void isIdempotentWhenMockHeaderAlreadyPresent() throws NoSuchMethodException {
-        MockSensorController controller = new MockSensorController(
-                new DeterministicMockGenerator(GeneratorConfig.defaults())
-        );
-        Method currentMethod = MockSensorController.class.getMethod("getCurrentMockValues", List.class, Long.class);
-        HandlerMethod handlerMethod = new HandlerMethod(controller, currentMethod);
+        MockDummyController mockController = new MockDummyController();
+        Method method = MockDummyController.class.getMethod("current");
+        HandlerMethod handlerMethod = new HandlerMethod(mockController, method);
 
         Operation operation = new Operation();
         operation.addParametersItem(new Parameter().in("header").name("x-mock-data"));
@@ -68,7 +53,7 @@ class MockHeaderOperationCustomizerTest {
     }
 
     @Test
-    void skipsNonMockSensorControllerMethods() throws NoSuchMethodException {
+    void skipsOperationsWithoutMockHeaderRouting() throws NoSuchMethodException {
         OperationalDummyController operationalController = new OperationalDummyController();
         Method method = OperationalDummyController.class.getMethod("getCurrentValues");
         HandlerMethod handlerMethod = new HandlerMethod(operationalController, method);
@@ -79,8 +64,22 @@ class MockHeaderOperationCustomizerTest {
         assertThat(operation.getParameters()).isNull();
     }
 
+    static class MockDummyController {
+
+        @GetMapping(value = "/current", headers = "X-Mock-Data=true")
+        public String current() {
+            return "mock-current";
+        }
+
+        @GetMapping(value = "/timeseries", headers = "X-Mock-Data=true")
+        public String timeseries() {
+            return "mock-series";
+        }
+    }
+
     static class OperationalDummyController {
 
+        @GetMapping("/current")
         public String getCurrentValues() {
             return "ok";
         }

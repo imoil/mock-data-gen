@@ -17,9 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
 @TestPropertySource(properties = {
-        "app-custom-config.mock.sensor.base-path=/api/v2/telemetry",
-        "app-custom-config.mock.sensor.current-path=/latest",
-        "app-custom-config.mock.sensor.timeseries-path=/history"
+        "app-custom-config.sensor.base-path=/api/v2/telemetry",
+        "app-custom-config.sensor.current-path=/latest",
+        "app-custom-config.sensor.timeseries-path=/history",
+        "ees.mock.sensor.base-path=/api/v2/telemetry",
+        "ees.mock.sensor.current-path=/latest",
+        "ees.mock.sensor.timeseries-path=/history"
 })
 class CustomEndpointUriIntegrationTest {
 

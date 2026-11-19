@@ -143,3 +143,102 @@
   - GitHub Actions CI(`check`, `ubuntu-latest`) 통과(push `1m9s`, PR `1m24s`) 및 `MERGEABLE`/`CLEAN` 상태 확인
   - PR `#8`을 `main`으로 병합(`f86783f`, `spec-1-integration` 브랜치 삭제 및 로컬 `main` fast-forward 동기화)
 - **변경 파일**: `agent-log.md` (외부 반영: PR `#8` 생성 및 `main` 병합)
+
+
+## [2026-11-19 15:33] `/improve-codebase-architecture` 코드베이스 아키텍처 심화 후보 탐색 및 HTML 리포트 생성
+
+- **요청**: `/improve-codebase-architecture`로 코드베이스의 아키텍처 마찰 및 module 심화(deepening) 후보 분석
+- **수행 내용**:
+  - `git log`, `GLOSSARY.md`, `docs/adr/0001`·`0002`, `CODING_STANDARDS.md` 확인 후 `research` 서브에이전트를 통해 `mock-data-core`, `mock-data-spring-boot-starter`, `example-app` 전수 탐색
+  - `codebase-design` 어휘(`module`, `interface`, `depth`, `seam`, `adapter`, `leverage`, `locality`)를 기준으로 5개 심화 후보(`Strong` 2, `Worth exploring` 2, `Speculative` 1) 도출
+  - OS 임시 디렉터리에 자체 완결 HTML 리포트(`C:\Users\imoil\AppData\Local\Temp\architecture-review-20261119-153222.html`) 생성 및 브라우저로 오픈 완료
+- **변경 파일**: `agent-log.md` (저장소 외 임시 파일 생성: `C:\Users\imoil\AppData\Local\Temp\architecture-review-20261119-153222.html`)
+
+## [2026-11-19 16:10] 후보 1 (`DeterministicMockGenerator` 심화) Grilling 라운드 1 시작
+
+- **요청**: 최우선 후보부터 순차적으로 아키텍처 개선 진행
+- **수행 내용**:
+  - `git grep`으로 `DeterministicWaveCalculator`, `TimeGridAligner`, `DeterministicHashUtil`이 `mock-data-core` 외부(`starter`, `example-app`, `README.md`)에서 직접 참조되지 않음을 확인
+  - `grilling` 워크플로우에 따라 후보 1의 프론티어 의사결정 3건(Q1: public `interface` 축소 범위, Q2: 내부 테스트 교체 및 삭제 여부, Q3: 대안 `interface` 탐색 여부) 질의
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 22:37] 후보 1 Grilling 라운드 1 승인 및 라운드 2(내부 구조·구현 확정) 질의
+
+- **요청**: 후보 1 라운드 1 추천안(Q1~Q3) 승인 (`예`)
+- **수행 내용**:
+  - `DeterministicMockGenerator` 단일 public `interface` 유지 및 3개 내부 테스트 교체·삭제 결정 반영
+  - 잔여 프론티어인 내부 `implementation` 구조(package-private `DeterministicWaveCalculator` + `TimeGridAligner`/`DeterministicHashUtil` 흡수 삭제) 및 `GLOSSARY.md`/오류 계약 유지 여부(Q4~Q5) 질의
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 22:39] 후보 1 구현·검증 완료 및 후보 2(설정·프리셋·URI seam 통합) Grilling 라운드 1 시작
+
+- **요청**: 후보 1 라운드 2 승인 및 후보 2 순차 진행
+- **수행 내용**:
+  - 후보 1 구현 완료:
+    - `TimeGridAligner.java`, `DeterministicHashUtil.java` 삭제 후 `DeterministicMockGenerator`에 **Current Quantization**·**Grid Alignment** 흡수
+    - `DeterministicWaveCalculator`를 package-private `final class`로 숨기고 해시·노이즈 유틸 내재화 및 `SensorId`당 1회 `PreparedSensor` 파생으로 중복 해싱 제거
+    - 3개 내부 단위 테스트 삭제 및 5종 `Pattern`·경계·결정론 검증을 `DeterministicMockGeneratorTest` (`DeterministicMockGenerator` + `Clock` `seam`)로 이관
+  - `.\gradlew.bat clean check --console=plain` 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 20, `example-app` 18, 총 58건 전원 통과, Javadoc/POM 메타데이터 검증 통과)
+  - 후보 2(`MockSensorProperties`, `MockSensorAutoConfiguration`, `MockSensorController`, `GeneratorConfig`, `SensorPhysicsPreset`) Grilling 라운드 1(Q1~Q3) 질의 시작
+- **변경 파일**: `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/engine/DeterministicMockGenerator.java`, `mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/engine/DeterministicWaveCalculator.java`, `mock-data-core/src/test/java/com/samsung/ees/infra/mock/core/engine/DeterministicMockGeneratorTest.java`, 삭제(`TimeGridAligner.java`, `DeterministicHashUtil.java`, `TimeGridAlignerTest.java`, `DeterministicHashUtilTest.java`, `DeterministicWaveCalculatorTest.java`), `agent-log.md`
+
+## [2026-11-19 22:45] 후보 2 Grilling 라운드 1 승인 및 라운드 2(세부 스키마·URI 단일 소스 확정) 질의
+
+- **요청**: 후보 2 라운드 1 추천안(Q1~Q3) 승인 (`추천 승인`)
+- **수행 내용**:
+  - `SensorPhysicsPreset` 빈 분리 및 YAML 바인딩, `MockSensorProperties` 단일 URI 소스 방향 확정
+  - 라운드 2 프론티어로 `physics` 중첩 YAML 스키마 및 빈 합성 순서(Q4), `MockSensorProperties` 단일 URI 소비·기본값 참조·기동 시 경로 검증(Q5) 질의
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 22:48] 후보 2 구현·검증 완료 및 후보 3(`X-Mock-Data` OpenAPI·예외·라우팅 seam 해소) Grilling 라운드 1 시작
+
+- **요청**: 후보 2 구현 진행 및 후보 3 순차 진행
+- **수행 내용**:
+  - 후보 2 구현·검증 완료:
+    - `MockSensorProperties`에 `GeneratorConfig.defaults()` / `SensorPhysicsPreset.defaults()` 기반 기본값, `physics` 중첩 YAML 바인딩(`app-custom-config.mock.sensor.physics.*`), 기동 시 URI 경로 검증(`InitializingBean.afterPropertiesSet`) 추가
+    - `MockSensorAutoConfiguration`에 `@EnableConfigurationProperties` + `mockSensorProperties` / `mockSensorPhysicsPreset` / `mockSensorGeneratorConfig` 빈 분리·합성 적용 (프리셋 빈 오버라이드 시 YAML 간격·한도·스케일 유지)
+    - `MockSensorController`가 `#{@mockSensorProperties.*}` SpEL로 단일 설정 `module`의 URI를 참조하도록 통합, [README.md](file:///C:/Users/imoil/repo/mock-data-gen/README.md) 및 `MockSensorAutoConfigurationTest` 갱신
+    - `.\gradlew.bat clean check --console=plain` 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 23, `example-app` 18, 총 61건 전원 통과)
+  - 후보 3(`MockHeaderOperationCustomizer`, `MockSensorController`, `example-app` `SensorController`) Grilling 라운드 1(Q1~Q3) 질의 시작
+- **변경 파일**: `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/config/MockSensorProperties.java`, `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/config/MockSensorAutoConfiguration.java`, `mock-data-spring-boot-starter/src/main/java/com/samsung/ees/infra/mock/starter/controller/MockSensorController.java`, `mock-data-spring-boot-starter/src/test/java/com/samsung/ees/infra/mock/starter/config/MockSensorAutoConfigurationTest.java`, `README.md`, `agent-log.md`
+
+## [2026-11-19 22:56] 후보 3 Grilling 라운드 1 부분 승인(Q1·Q2) 및 라운드 2(Starter/컨슈머 프로퍼티 프리픽스 분리) 질의
+
+- **요청**: Q1·Q2 승인, Q3에 대해 `app-custom-config`는 컨슈머 앱(`example-app`) 설정으로 두고 Mock 라이브러리(`mock-data-spring-boot-starter`)는 고유 프로퍼티 프리픽스가 필요하다는 의견 제시
+- **수행 내용**:
+  - Q1(`MockHeaderOperationCustomizer` `@RequestMapping` headers 조건 판별), Q2(`handleMissingParam` dead 분기 삭제) 확정
+  - 기존 `ADR-0002`(`app-custom-config.mock.sensor.*`)와의 충돌을 해소하기 위해 Starter 고유 프리픽스(`ees.mock.sensor.*` 등)와 컨슈머 앱 프리픽스(`app-custom-config.sensor.*`) 분리 및 후속 ADR 기록 여부를 묻는 라운드 2(Q4~Q5) 질의
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-19 23:00] 후보 3 구현·검증 완료 및 후보 4(`Clock` seam·`FlexibleTimestampParser`) Grilling 라운드 1 시작
+
+- **요청**: 후보 3 라운드 2 승인 (`모두 승인`) 및 후보 4 순차 진행
+- **수행 내용**:
+  - 후보 3 구현·검증 완료:
+    - `MockHeaderOperationCustomizer`를 `MockSensorController.class` 직접 결합에서 `@RequestMapping`/`@GetMapping` `headers`(`X-Mock-Data`) 조건 판별(`AnnotatedElementUtils.findMergedAnnotation`)로 분리하고 `MockHeaderOperationCustomizerTest`의 리플렉션·실제 컨트롤러 생성 의존 제거
+    - `MockSensorController.handleMissingParam`의 도달 불가능 `"sensorIds"` 분기 삭제
+    - Starter 설정 프리픽스(`ees.mock.sensor.*`)와 `example-app` 호스트 설정(`app-custom-config.sensor.*`) 분리, `docs/adr/0003-starter-property-prefix-separation.md` 작성 및 `ADR-0002`·`CODING_STANDARDS.md`·`README.md`·`application-*.yml`·통합 테스트 갱신
+    - `.\gradlew.bat clean check --console=plain` 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 23, `example-app` 18, 총 61건 전원 통과)
+  - 후보 4(`MockSensorAutoConfiguration`, `MockSensorController`, `FlexibleTimestampParser`) Grilling 라운드 1(Q1~Q2) 질의 시작
+- **변경 파일**: `MockHeaderOperationCustomizer.java`, `MockHeaderOperationCustomizerTest.java`, `MockSensorController.java`, `MockSensorProperties.java`, `MockSensorAutoConfiguration.java`, `MockSensorAutoConfigurationTest.java`, `example-app/.../SensorController.java`, `example-app/.../application-*.yml`, `ProdProfileIsolationIntegrationTest.java`, `CustomEndpointUriIntegrationTest.java`, `docs/adr/0003-starter-property-prefix-separation.md`, `docs/adr/0002-deterministic-noise-and-starter-customization.md`, `CODING_STANDARDS.md`, `README.md`, `agent-log.md`
+
+## [2026-11-19 23:12] 후보 4 구현·검증 완료 및 후보 5(얇은 설정·중복 정리) Grilling 라운드 1 시작
+
+- **요청**: 후보 4 승인 (`예`) 및 후보 5 순차 진행
+- **수행 내용**:
+  - 후보 4 구현·검증 완료:
+    - `MockSensorAutoConfiguration`이 `ObjectProvider<Clock>`을 받아 `DeterministicMockGenerator`와 `MockSensorController`에 선택적 `Clock` 전달 (미등록 시 `Clock.systemUTC()`, 기본 `Clock` 빈 미등록)
+    - `MockSensorController`가 2-인자 생성자로 `Clock`을 수용해 `badRequest`에서 `clock.instant()`를 사용하도록 변경하고 `FlexibleTimestampParser`를 private 메서드로 흡수·삭제
+    - `MockSensorAutoConfigurationTest`에 고정 `Clock` 주입 및 기본 `Clock` 미등록 검증 추가
+    - `.\gradlew.bat clean check --console=plain` 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 24, `example-app` 18, 총 62건 전원 통과)
+  - 후보 5(`MockSensorOpenApiConfiguration`, `GeneratorConfig`, `SensorPhysicsPreset`, `MockSensorControllerAdviceIsolationTest`) Grilling 라운드 1(Q1~Q2) 질의 시작
+- **변경 파일**: `MockSensorAutoConfiguration.java`, `MockSensorController.java`, `MockSensorAutoConfigurationTest.java`, 삭제(`FlexibleTimestampParser.java`), `agent-log.md`
+
+## [2026-11-19 23:13] 후보 5 구현·검증 완료 및 전체 아키텍처 심화 작업 마무리
+
+- **요청**: 후보 5 Q1 승인 (`예`) 및 최종 검증
+- **수행 내용**:
+  - `GeneratorConfig`, `SensorPhysicsPreset`의 `defaults()`와 `Builder` 초기값을 `DEFAULTS` 단일 상수로 통합
+  - `SensorPhysicsPreset`에 `Double.isFinite` 및 `anomalySpikeMultiplier >= 0` 검증 추가, `SensorPhysicsPresetTest`에 경계 테스트 보강 (`MockSensorOpenApiConfiguration` 및 `MockSensorControllerAdviceIsolationTest`는 의도적 격리 유지를 위해 현행 유지)
+  - `.\gradlew.bat clean check publishToMavenLocal --console=plain` 최종 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 24, `example-app` 18, 총 62건 전원 통과, Javadoc/POM 검증 및 로컬 Maven 배포 완료)
+- **변경 파일**: `GeneratorConfig.java`, `SensorPhysicsPreset.java`, `SensorPhysicsPresetTest.java`, `agent-log.md`

@@ -33,13 +33,17 @@ public record GeneratorConfig(
         }
     }
 
+    private static final GeneratorConfig DEFAULTS = new GeneratorConfig(
+            1000L, 10000L, 100L, 10000, 2, SensorPhysicsPreset.defaults()
+    );
+
     /**
      * Returns the default configuration matching the project specification.
      *
      * @return default generator configuration
      */
     public static GeneratorConfig defaults() {
-        return new GeneratorConfig(1000L, 10000L, 100L, 10000, 2, SensorPhysicsPreset.defaults());
+        return DEFAULTS;
     }
 
     public static Builder builder() {
@@ -47,12 +51,12 @@ public record GeneratorConfig(
     }
 
     public static final class Builder {
-        private long defaultCurrentIntervalMs = 1000L;
-        private long defaultSeriesIntervalMs = 10000L;
-        private long minIntervalMs = 100L;
-        private int maxPointsPerSensor = 10000;
-        private int decimalScale = 2;
-        private SensorPhysicsPreset physicsPreset = SensorPhysicsPreset.defaults();
+        private long defaultCurrentIntervalMs = DEFAULTS.defaultCurrentIntervalMs();
+        private long defaultSeriesIntervalMs = DEFAULTS.defaultSeriesIntervalMs();
+        private long minIntervalMs = DEFAULTS.minIntervalMs();
+        private int maxPointsPerSensor = DEFAULTS.maxPointsPerSensor();
+        private int decimalScale = DEFAULTS.decimalScale();
+        private SensorPhysicsPreset physicsPreset = DEFAULTS.physicsPreset();
 
         public Builder defaultCurrentIntervalMs(long defaultCurrentIntervalMs) {
             this.defaultCurrentIntervalMs = defaultCurrentIntervalMs;

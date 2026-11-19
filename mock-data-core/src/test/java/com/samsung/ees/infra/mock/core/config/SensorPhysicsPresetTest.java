@@ -117,5 +117,17 @@ class SensorPhysicsPresetTest {
         assertThatThrownBy(() -> SensorPhysicsPreset.builder().anomaly(10.0, 101, 2.0).build())
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("anomaly parameters out of range");
+
+        assertThatThrownBy(() -> SensorPhysicsPreset.builder().anomaly(10.0, 5, -0.1).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("anomaly parameters out of range");
+
+        assertThatThrownBy(() -> SensorPhysicsPreset.builder().baseline(Double.NaN, 10.0).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("baseline bounds must be finite");
+
+        assertThatThrownBy(() -> SensorPhysicsPreset.builder().noiseRatio(Double.POSITIVE_INFINITY).build())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("noiseRatio must be non-negative");
     }
 }

@@ -1,7 +1,7 @@
 package com.samsung.ees.infra.mock.core.engine;
 
 import com.samsung.ees.infra.mock.core.config.GeneratorConfig;
-import com.samsung.ees.infra.mock.core.domain.MockPatternType;
+import com.samsung.ees.infra.mock.core.engine.DeterministicWaveCalculator.PreparedSensor;
 import com.samsung.ees.infra.mock.core.exception.InvalidMockRequestException;
 import com.samsung.ees.infra.mock.core.model.CurrentMockResponse;
 import com.samsung.ees.infra.mock.core.model.SensorSeries;
@@ -64,13 +64,13 @@ public class DeterministicMockGenerator {
     public CurrentMockResponse generateCurrentValues(List<String> sensorIds, Long intervalMs, long nowEpochMs) {
         List<String> normalizedIds = normalizeSensorIds(sensorIds);
         long effectiveInterval = resolveInterval(intervalMs, config.defaultCurrentIntervalMs());
-        long alignedEpochMs = TimeGridAligner.quantizeCurrent(nowEpochMs, effectiveInterval);
+        long alignedEpochMs = quantizeCurrent(nowEpochMs, effectiveInterval);
 
         List<SensorValue> values = new ArrayList<>(normalizedIds.size());
         for (String sensorId : normalizedIds) {
-            MockPatternType pattern = waveCalculator.resolvePattern(sensorId);
-            double value = waveCalculator.calculate(sensorId, alignedEpochMs, config.decimalScale());
-            values.add(new SensorValue(sensorId, value, pattern));
+            PreparedSensor prepared = waveCalculator.prepare(sensorId);
+            double value = waveCalculator.calculate(prepared, alignedEpochMs, config.decimalScale());
+            values.add(new SensorValue(sensorId, value, prepared.pattern()));
         }
 
         return new CurrentMockResponse(
@@ -109,18 +109,18 @@ public class DeterministicMockGenerator {
             );
         }
 
-        long gridStart = TimeGridAligner.alignGridStart(fromEpochMs, effectiveInterval);
+        long gridStart = alignGridStart(fromEpochMs, effectiveInterval);
         List<Long> timestamps = buildGridTimestamps(gridStart, toEpochMs, effectiveInterval);
 
         List<SensorSeries> seriesList = new ArrayList<>(normalizedIds.size());
         for (String sensorId : normalizedIds) {
-            MockPatternType pattern = waveCalculator.resolvePattern(sensorId);
+            PreparedSensor prepared = waveCalculator.prepare(sensorId);
             List<TimeSeriesPoint> points = new ArrayList<>(timestamps.size());
             for (long ts : timestamps) {
-                double value = waveCalculator.calculate(sensorId, ts, config.decimalScale());
+                double value = waveCalculator.calculate(prepared, ts, config.decimalScale());
                 points.add(new TimeSeriesPoint(ts, value));
             }
-            seriesList.add(new SensorSeries(sensorId, pattern, List.copyOf(points)));
+            seriesList.add(new SensorSeries(sensorId, prepared.pattern(), List.copyOf(points)));
         }
 
         return new TimeSeriesMockResponse(
@@ -154,6 +154,14 @@ public class DeterministicMockGenerator {
             );
         }
         return effective;
+    }
+
+    private static long quantizeCurrent(long nowEpochMs, long intervalMs) {
+        return Math.floorDiv(nowEpochMs, intervalMs) * intervalMs;
+    }
+
+    private static long alignGridStart(long fromEpochMs, long intervalMs) {
+        return Math.ceilDiv(fromEpochMs, intervalMs) * intervalMs;
     }
 
     private List<Long> buildGridTimestamps(long gridStart, long toEpochMs, long intervalMs) {
