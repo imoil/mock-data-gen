@@ -242,3 +242,11 @@
   - `SensorPhysicsPreset`에 `Double.isFinite` 및 `anomalySpikeMultiplier >= 0` 검증 추가, `SensorPhysicsPresetTest`에 경계 테스트 보강 (`MockSensorOpenApiConfiguration` 및 `MockSensorControllerAdviceIsolationTest`는 의도적 격리 유지를 위해 현행 유지)
   - `.\gradlew.bat clean check publishToMavenLocal --console=plain` 최종 통과 (`BUILD SUCCESSFUL`: `mock-data-core` 20, `mock-data-spring-boot-starter` 24, `example-app` 18, 총 62건 전원 통과, Javadoc/POM 검증 및 로컬 Maven 배포 완료)
 - **변경 파일**: `GeneratorConfig.java`, `SensorPhysicsPreset.java`, `SensorPhysicsPresetTest.java`, `agent-log.md`
+
+## [2026-11-19 23:15] `/pr` PR `#9` 생성 및 브랜치 푸시
+
+- **요청**: `/pr` 템플릿으로 Pull Request 작성 및 생성
+- **수행 내용**:
+  - `refactor/architecture-deepening` 브랜치 생성 및 커밋(`16a01ff`), `origin` 푸시 완료
+  - `/pr` 형식(`Summary`, `Evidence`, `Merge Danger`)으로 PR `#9`(`https://github.com/imoil/mock-data-gen/pull/9`) 생성
+- **변경 파일**: `agent-log.md` (외부 반영: PR `#9` 생성)
