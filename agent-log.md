@@ -372,3 +372,21 @@
   - `git status`, `git branch -a`, `gh pr list` 확인 결과 오픈 PR이나 미병합 로컬 브랜치 없이 `main` 브랜치에 `agent-log.md` 변경분만 존재함을 확인
   - 직전 `example-app` 실브라우저 점검 이력 및 현재 턴 이력을 포함한 `agent-log.md`를 커밋 후 `origin/main`으로 푸시
 - **변경 파일**: `agent-log.md`
+
+## [2026-11-20 16:18] `/diagram-design` 에이전트 협업 워크플로우 다이어그램 2종 생성 및 검증
+
+- **요청**: `agent-log.md`에서 상세 버그 수정 및 커밋/PR 세부 내역을 제외하고 스킬 설정·주요 의사결정·GitHub/GHES 협동·전체 진행 흐름을 신규 개발자 대상 한국어 다이어그램으로 작성
+- **수행 내용**:
+  - `diagram-design` §0 스타일 가이드 게이트 및 §3 구성 확인 질의 결과에 따라 기본 스타일 가이드(`#f5f5f5` / `#2d3142` / `#bf4520`) 유지 및 `Swimlane`·`Process`(`doc-wide`, `1280×720`) 2종 제작 확정
+  - [docs/diagrams/agent-workflow-swimlane.html](docs/diagrams/agent-workflow-swimlane.html) 작성: `개발자`·`AI 에이전트`·`GitHub / GHES` 3개 레인 간 8개 핵심 노드(`스킬·규칙 설정` → `설계 인터뷰·ADR` → `아키텍처 확정` → `스펙·티켓 DAG` → `병렬 구현·검증` → `최종 검토·승인` / `PR·CI 검증·병합` → `회고·온보딩·로그`) 협업 흐름 시각화
+  - [docs/diagrams/agent-workflow-process.html](docs/diagrams/agent-workflow-process.html) 작성: 7단계 프로세스별 담당 주체, 입·출력 산출물 칩(`LS`, `FL`, `DB`, `WB`), 관심사 구분(`거버넌스`, `품질·CI`, `문서화`) 및 사용 스킬·도구 매핑 시각화
+  - `diagram-design` 자동 검증(`self_check.py`, `verify_geometry.py` 2종 모두 `0 finding(s)`) 및 `ego-browser` 실렌더링 PNG 시각 점검 완료
+- **변경 파일**: `docs/diagrams/agent-workflow-swimlane.html`, `docs/diagrams/agent-workflow-process.html`, `agent-log.md`
+
+## [2026-11-20 16:47] 다이어그램 2종 및 `agent-log.md` 커밋 및 `origin/main` 푸시
+
+- **요청**: 생성한 다이어그램 및 변경 사항 커밋·푸시
+- **수행 내용**:
+  - `docs/diagrams/agent-workflow-swimlane.html`, `docs/diagrams/agent-workflow-process.html`, `agent-log.md` 스테이징 및 커밋
+  - `origin/main` 원격 저장소로 푸시 완료 및 작업 트리 정리 확인
+- **변경 파일**: `docs/diagrams/agent-workflow-swimlane.html`, `docs/diagrams/agent-workflow-process.html`, `agent-log.md`

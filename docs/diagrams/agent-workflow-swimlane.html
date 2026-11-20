@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>에이전트 협업 프로젝트 워크플로우 · Swimlane</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-soft:    #5a6580;
+      --color-accent:  #bf4520;
+      --color-link:    #2e5aa8;
+      --font-sans:     'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1280px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: var(--color-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1280px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Swimlane · Agent Collaboration Overview</p>
+    <h1>에이전트 협업 프로젝트 워크플로우</h1>
+    <p class="subtitle">agent-log.md 기반 신규 개발자 안내 · 스킬 초기화, 설계 의사결정, GitHub/GHES 협동 및 검증 흐름</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="agent-workflow-swimlane-title agent-workflow-swimlane-desc">
+        <title id="agent-workflow-swimlane-title">에이전트 협업 프로젝트 워크플로우</title>
+        <desc id="agent-workflow-swimlane-desc">개발자, AI 에이전트, GitHub/GHES 세 영역 간 스킬 초기화, 설계 의사결정, 이슈 DAG 발행, 병렬 구현 및 검증, PR 병합, 온보딩 기록 유지의 협업 흐름을 나타낸 스윔레인 다이어그램.</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+          </marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#bf4520"/>
+          </marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
+          </marker>
+        </defs>
+
+        <!-- Background -->
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+
+        <!-- Middle lane subtle tint -->
+        <rect x="176" y="244" width="1064" height="180" fill="rgba(45,49,66,0.018)"/>
+
+        <!-- Lane dividers -->
+        <line x1="40" y1="64" x2="1240" y2="64" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <line x1="40" y1="244" x2="1240" y2="244" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <line x1="40" y1="424" x2="1240" y2="424" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <line x1="40" y1="604" x2="1240" y2="604" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+
+        <!-- Actor column divider -->
+        <line x1="176" y1="64" x2="176" y2="604" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+
+        <!-- Lane labels (Korean at 12px sans, Latin mono sublabel) -->
+        <text x="108" y="148" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">개발자</text>
+        <text x="108" y="166" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">HUMAN</text>
+
+        <text x="108" y="328" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">AI 에이전트</text>
+        <text x="108" y="346" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AGENT</text>
+
+        <text x="108" y="508" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">GitHub / GHES</text>
+        <text x="108" y="526" fill="#2e5aa8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">REMOTE</text>
+
+        <!-- Arrows (drawn BEFORE boxes) -->
+        <!-- 1. N1 (Human Col 0) -> N2 (Agent Col 1) -->
+        <path d="M 268,196 V 326 Q 268,334 276,334 H 364" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- 2. N2 (Agent Col 1) -> N3 (Human Col 1): design review/approval -->
+        <line x1="440" y1="292" x2="440" y2="196" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+
+        <!-- 3. N3 (Human Col 1) -> N4 (GitHub Col 2): publish spec & tickets -->
+        <path d="M 516,154 H 604 Q 612,154 612,162 V 472" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+        <!-- 4. N4 (GitHub Col 2) -> N5 (Agent Col 3): pick up ready-for-agent DAG -->
+        <path d="M 688,514 H 748 Q 756,514 756,506 V 376" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+
+        <!-- 5. N5 (Agent Col 3) -> N7 (Human Col 4): report review & verification -->
+        <path d="M 784,292 V 162 Q 784,154 792,154 H 880" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- 6. N5 (Agent Col 3) -> N6 (GitHub Col 4): focal PR & CI execution -->
+        <path d="M 812,376 V 506 Q 812,514 820,514 H 880" fill="none" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+        <!-- 7. N7 (Human Col 4) -> N6 (GitHub Col 4): approve & merge -->
+        <line x1="956" y1="196" x2="956" y2="472" stroke="#2e5aa8" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow-link)"/>
+
+        <!-- 8. N6 (GitHub Col 4) -> N8 (Agent Col 5): post-merge retro & log -->
+        <path d="M 1032,514 H 1120 Q 1128,514 1128,506 V 376" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+        <!-- Arrow labels (opaque paper mask, 12px Korean sans, 8-12px clear gap from stroke) -->
+        <rect x="448" y="236" width="64" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="480" y="248" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">설계 합의</text>
+
+        <rect x="622" y="326" width="64" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="654" y="338" fill="#2e5aa8" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">이슈 발행</text>
+
+        <rect x="794" y="216" width="64" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="826" y="228" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">검증 보고</text>
+
+        <rect x="966" y="326" width="64" height="16" rx="2" fill="#f5f5f5"/>
+        <text x="998" y="338" fill="#2e5aa8" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">병합 승인</text>
+
+        <!-- Nodes (mask rect -> styled box -> tag -> Korean title -> mono sublabel) -->
+        <!-- N1: Human Col 0 -->
+        <rect x="192" y="112" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="192" y="112" width="152" height="84" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="200" y="120" width="60" height="14" rx="2" fill="transparent" stroke="rgba(45,49,66,0.35)" stroke-width="0.8"/>
+        <text x="230" y="130" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">01 · SETUP</text>
+        <text x="268" y="156" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">스킬·규칙 설정</text>
+        <text x="268" y="176" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">skills · AGENTS.md</text>
+
+        <!-- N2: Agent Col 1 -->
+        <rect x="364" y="292" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="364" y="292" width="152" height="84" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="372" y="300" width="64" height="14" rx="2" fill="transparent" stroke="rgba(45,49,66,0.35)" stroke-width="0.8"/>
+        <text x="404" y="310" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">02 · DESIGN</text>
+        <text x="440" y="336" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">설계 인터뷰·ADR</text>
+        <text x="440" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/grill · GLOSSARY</text>
+
+        <!-- N3: Human Col 1 -->
+        <rect x="364" y="112" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="364" y="112" width="152" height="84" rx="6" fill="rgba(79,93,117,0.08)" stroke="#5a6580" stroke-width="1"/>
+        <rect x="372" y="120" width="56" height="14" rx="2" fill="transparent" stroke="rgba(90,101,128,0.40)" stroke-width="0.8"/>
+        <text x="400" y="130" fill="#5a6580" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">03 · GATE</text>
+        <text x="440" y="156" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">아키텍처 확정</text>
+        <text x="440" y="176" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">ADR · scope lock</text>
+
+        <!-- N4: GitHub Col 2 -->
+        <rect x="536" y="472" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="536" y="472" width="152" height="84" rx="6" fill="rgba(46,90,168,0.05)" stroke="#2e5aa8" stroke-width="1"/>
+        <rect x="544" y="480" width="56" height="14" rx="2" fill="transparent" stroke="rgba(46,90,168,0.40)" stroke-width="0.8"/>
+        <text x="572" y="490" fill="#2e5aa8" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">04 · GHES</text>
+        <text x="612" y="516" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">스펙·티켓 DAG</text>
+        <text x="612" y="536" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">gh issue · blockedBy</text>
+
+        <!-- N5: Agent Col 3 (FOCAL) -->
+        <rect x="708" y="292" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="708" y="292" width="152" height="84" rx="6" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.2"/>
+        <rect x="716" y="300" width="60" height="14" rx="2" fill="transparent" stroke="rgba(191,69,32,0.45)" stroke-width="0.8"/>
+        <text x="746" y="310" fill="#bf4520" font-size="7" font-family="'Geist Mono', monospace" font-weight="600" text-anchor="middle" letter-spacing="0.08em">05 · BUILD</text>
+        <text x="784" y="336" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">병렬 구현·검증</text>
+        <text x="784" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">worktree · check · UI</text>
+
+        <!-- N6: GitHub Col 4 -->
+        <rect x="880" y="472" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="880" y="472" width="152" height="84" rx="6" fill="rgba(46,90,168,0.05)" stroke="#2e5aa8" stroke-width="1"/>
+        <rect x="888" y="480" width="64" height="14" rx="2" fill="transparent" stroke="rgba(46,90,168,0.40)" stroke-width="0.8"/>
+        <text x="920" y="490" fill="#2e5aa8" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">06 · PR/CI</text>
+        <text x="956" y="516" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">PR·CI 검증·병합</text>
+        <text x="956" y="536" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/pr · Actions · main</text>
+
+        <!-- N7: Human Col 4 -->
+        <rect x="880" y="112" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="880" y="112" width="152" height="84" rx="6" fill="rgba(79,93,117,0.08)" stroke="#5a6580" stroke-width="1"/>
+        <rect x="888" y="120" width="64" height="14" rx="2" fill="transparent" stroke="rgba(90,101,128,0.40)" stroke-width="0.8"/>
+        <text x="920" y="130" fill="#5a6580" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">07 · REVIEW</text>
+        <text x="956" y="156" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">최종 검토·승인</text>
+        <text x="956" y="176" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">review · merge gate</text>
+
+        <!-- N8: Agent Col 5 -->
+        <rect x="1052" y="292" width="152" height="84" rx="6" fill="#f5f5f5"/>
+        <rect x="1052" y="292" width="152" height="84" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="1060" y="300" width="64" height="14" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
+        <text x="1092" y="310" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" font-weight="500" text-anchor="middle" letter-spacing="0.08em">08 · MEMORY</text>
+        <text x="1128" y="336" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" text-anchor="middle">회고·온보딩·로그</text>
+        <text x="1128" y="356" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">/retro · agent-log</text>
+
+        <!-- Bottom Legend Strip -->
+        <line x1="40" y1="628" x2="1240" y2="628" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+        <text x="40" y="652" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.16em">LEGEND</text>
+
+        <rect x="40" y="668" width="16" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text x="64" y="678" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">일반 실행</text>
+
+        <rect x="156" y="668" width="16" height="12" rx="2" fill="rgba(79,93,117,0.08)" stroke="#5a6580" stroke-width="1"/>
+        <text x="180" y="678" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">의사결정 게이트</text>
+
+        <rect x="304" y="668" width="16" height="12" rx="2" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.2"/>
+        <text x="328" y="678" fill="#bf4520" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">핵심 구현·검증</text>
+
+        <rect x="448" y="668" width="16" height="12" rx="2" fill="rgba(46,90,168,0.05)" stroke="#2e5aa8" stroke-width="1"/>
+        <text x="472" y="678" fill="#2e5aa8" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">GitHub / GHES</text>
+
+        <rect x="596" y="668" width="16" height="12" rx="2" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <text x="620" y="678" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">문서·로그 저장</text>
+
+        <line x1="744" y1="674" x2="776" y2="674" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text x="784" y="678" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">작업 전달</text>
+
+        <line x1="876" y1="674" x2="908" y2="674" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="916" y="678" fill="#4f5d75" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">검토·승인</text>
+
+        <line x1="1008" y1="674" x2="1040" y2="674" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <text x="1048" y="678" fill="#2e5aa8" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">gh / CI 호출</text>
+
+        <line x1="1152" y1="674" x2="1184" y2="674" stroke="#bf4520" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text x="1192" y="678" fill="#bf4520" font-size="12" font-weight="500" font-family="'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">PR 제출</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
