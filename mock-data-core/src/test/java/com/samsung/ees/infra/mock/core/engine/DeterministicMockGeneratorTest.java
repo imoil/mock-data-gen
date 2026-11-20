@@ -269,6 +269,46 @@ class DeterministicMockGeneratorTest {
     }
 
     @Test
+    void guardsAgainst64BitOverflowAndUnderflowAtExtremeEpochBoundaries() {
+        assertThatThrownBy(() -> generator.generateTimeSeries(
+                List.of("TEMP-01"), -5_000_000_000_000_000_000L, 5_000_000_000_000_000_000L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("Requested points exceed maximum limit (10000)");
+
+        assertThatThrownBy(() -> generator.generateTimeSeries(List.of("TEMP-01"), Long.MIN_VALUE, 0L, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("Requested points exceed maximum limit (10000)");
+
+        assertThatThrownBy(() -> generator.generateTimeSeries(
+                List.of("TEMP-01"), Long.MIN_VALUE, Long.MAX_VALUE, 1000L))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("Requested points exceed maximum limit (10000)");
+
+        TimeSeriesMockResponse nearMaxEmpty = generator.generateTimeSeries(
+                List.of("TEMP-01"), Long.MAX_VALUE - 5L, Long.MAX_VALUE, 1000L);
+        assertThat(nearMaxEmpty.series().get(0).points()).isEmpty();
+
+        TimeSeriesMockResponse nearMaxOnePoint = generator.generateTimeSeries(
+                List.of("TEMP-01"), Long.MAX_VALUE - 1000L, Long.MAX_VALUE, 1000L);
+        assertThat(nearMaxOnePoint.series().get(0).points())
+                .extracting(TimeSeriesPoint::timestamp)
+                .containsExactly(9223372036854775000L);
+
+        TimeSeriesMockResponse largeIntervalCrossingZero = generator.generateTimeSeries(
+                List.of("TEMP-01"), -5_000_000_000_000_000_000L, 5_000_000_000_000_000_000L, 5_000_000_000_000_000_000L);
+        assertThat(largeIntervalCrossingZero.series().get(0).points())
+                .extracting(TimeSeriesPoint::timestamp)
+                .containsExactly(-5_000_000_000_000_000_000L, 0L, 5_000_000_000_000_000_000L);
+
+        assertThatThrownBy(() -> generator.generateCurrentValues(List.of("TEMP-01"), 1000L, Long.MIN_VALUE))
+                .isInstanceOf(InvalidMockRequestException.class)
+                .hasMessage("Quantized timestamp underflows minimum 64-bit epoch millisecond");
+
+        assertThat(generator.generateCurrentValues(List.of("TEMP-01"), 1024L, Long.MIN_VALUE).epochMillis())
+                .isEqualTo(Long.MIN_VALUE);
+    }
+
+    @Test
     void assignsAllFivePatternsDeterministicallyAndDifferentiatesSensorsAndTicks() {
         List<String> sensorIds = IntStream.range(0, 100)
                 .mapToObj(i -> "SENSOR-" + i)

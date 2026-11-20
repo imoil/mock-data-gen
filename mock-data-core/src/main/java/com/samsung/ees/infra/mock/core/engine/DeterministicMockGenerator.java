@@ -102,15 +102,14 @@ public class DeterministicMockGenerator {
         }
         long effectiveInterval = resolveInterval(intervalMs, config.defaultSeriesIntervalMs());
 
-        long estimatedPoints = (toEpochMs - fromEpochMs) / effectiveInterval;
-        if (estimatedPoints > config.maxPointsPerSensor()) {
+        long estimatedIntervals = Long.divideUnsigned(toEpochMs - fromEpochMs, effectiveInterval);
+        if (Long.compareUnsigned(estimatedIntervals, config.maxPointsPerSensor()) > 0) {
             throw new InvalidMockRequestException(
                     "Requested points exceed maximum limit (" + config.maxPointsPerSensor() + ")"
             );
         }
 
-        long gridStart = alignGridStart(fromEpochMs, effectiveInterval);
-        List<Long> timestamps = buildGridTimestamps(gridStart, toEpochMs, effectiveInterval);
+        List<Long> timestamps = buildAlignedTimestamps(fromEpochMs, toEpochMs, effectiveInterval);
 
         List<SensorSeries> seriesList = new ArrayList<>(normalizedIds.size());
         for (String sensorId : normalizedIds) {
@@ -157,18 +156,32 @@ public class DeterministicMockGenerator {
     }
 
     private static long quantizeCurrent(long nowEpochMs, long intervalMs) {
-        return Math.floorDiv(nowEpochMs, intervalMs) * intervalMs;
+        long rem = Math.floorMod(nowEpochMs, intervalMs);
+        if (nowEpochMs < Long.MIN_VALUE + rem) {
+            throw new InvalidMockRequestException(
+                    "Quantized timestamp underflows minimum 64-bit epoch millisecond"
+            );
+        }
+        return nowEpochMs - rem;
     }
 
-    private static long alignGridStart(long fromEpochMs, long intervalMs) {
-        return Math.ceilDiv(fromEpochMs, intervalMs) * intervalMs;
-    }
-
-    private List<Long> buildGridTimestamps(long gridStart, long toEpochMs, long intervalMs) {
+    private static List<Long> buildAlignedTimestamps(long fromEpochMs, long toEpochMs, long intervalMs) {
+        long rem = Math.floorMod(fromEpochMs, intervalMs);
+        long gridStart;
+        if (rem == 0L) {
+            gridStart = fromEpochMs;
+        } else {
+            long delta = intervalMs - rem;
+            if (fromEpochMs > Long.MAX_VALUE - delta) {
+                return List.of();
+            }
+            gridStart = fromEpochMs + delta;
+        }
         if (gridStart > toEpochMs) {
             return List.of();
         }
-        int capacity = (int) (((toEpochMs - gridStart) / intervalMs) + 1);
+        long countMinusOne = Long.divideUnsigned(toEpochMs - gridStart, intervalMs);
+        int capacity = (int) Math.min(countMinusOne + 1L, Integer.MAX_VALUE);
         List<Long> timestamps = new ArrayList<>(capacity);
         for (long t = gridStart; t <= toEpochMs; t += intervalMs) {
             timestamps.add(t);
