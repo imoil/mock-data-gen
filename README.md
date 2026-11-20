@@ -109,6 +109,7 @@ Spring Boot 앱에서는 `@Bean SensorPhysicsPreset`을 등록하면 YAML의 `ee
 
 ## 관련 문서
 
+- [신규 개발자 온보딩 안내서](./docs/ONBOARDING.md)
 - [프로젝트사양서.md](./프로젝트사양서.md)
 - [GLOSSARY.md](./GLOSSARY.md)
 - [docs/adr/0001-multi-module-library-boundary.md](./docs/adr/0001-multi-module-library-boundary.md)
