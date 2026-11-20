@@ -258,3 +258,77 @@
   - GitHub Actions `check` 워크플로우(`https://github.com/imoil/mock-data-gen/actions/runs/44541762242/job/135621658139`) 통과(`pass`, `1m0s`) 및 `MERGEABLE`/`CLEAN` 상태 확인
   - PR `#9`를 `main`으로 병합(`15740db`, `refactor/architecture-deepening` 원격·로컬 브랜치 삭제 및 로컬 `main` fast-forward 동기화)
 - **변경 파일**: `agent-log.md` (외부 반영: PR `#9` `main` 병합)
+
+## [2026-11-19 23:28] `/create-verification-skill` 프로젝트 검증 스킬 생성 및 E2E 실증 완료
+
+- **요청**: `/create-verification-skill` 실행 (`mock-data-gen` 대상 로컬 검증 스킬 및 기능 맵 생성·실증)
+- **수행 내용**:
+  - 저장소 분석(`example-app`, `mock-data-spring-boot-starter`, `mock-data-core`): 주 검증 표면으로 `example-app` HTTP REST API(`/api/v1/sensors/current`, `/api/v1/sensors/timeseries`, `/v3/api-docs`, `/swagger-ui/index.html`) 및 `local`/`dev`/`prod` 프로필·커스텀 URI 격리 구조를 식별하고, 무상태 다중 인스턴스 격리(`--run-id`, 동적 포트) 설계
+  - `.cursor/skills/verify-mock-data-gen/`에 `SKILL.md`, 실행 가능한 Python 3 표준 라이브러리 기반 하네스(`scripts/verify_app.py`: `launch`, `doctor`, `request`, `cleanup`), 기능 맵 인덱스(`features/README.md`) 및 4개 기능 레시피(`current-sensor-values.md`, `timeseries-sensor-data.md`, `profile-and-uri-isolation.md`, `openapi-and-error-isolation.md`) 작성
+  - 생성된 스킬 지침대로 E2E 검증 수행: `launch` (`:example-app:bootJar` 빌드 및 기동, PID `10840`/포트 `55246` 및 최종 수정 후 `--skip-build` 재기동 PID `9312`/포트 `60529`) -> `doctor` (`"healthy": true`) -> `current-sensor-values.md` 전 하위 기능(`mock-single`, `mock-multi`, `mock-quantized-1`/`2`, `fallback-absent`, `fallback-false`) 구동 -> `cleanup` 후 런타임 디렉터리(`build/verify-runs/verify-self-test`) 제거 및 증거 파일 6건(`artifacts/verify-mock-data-gen/verify-self-test/current-sensor-values/*.json`) 보존 확인
+- **변경 파일**: `.cursor/skills/verify-mock-data-gen/SKILL.md`, `.cursor/skills/verify-mock-data-gen/scripts/verify_app.py`, `.cursor/skills/verify-mock-data-gen/features/README.md`, `.cursor/skills/verify-mock-data-gen/features/current-sensor-values.md`, `.cursor/skills/verify-mock-data-gen/features/timeseries-sensor-data.md`, `.cursor/skills/verify-mock-data-gen/features/profile-and-uri-isolation.md`, `.cursor/skills/verify-mock-data-gen/features/openapi-and-error-isolation.md`, `agent-log.md`
+
+## [2026-11-19 23:44] `/create-formal-verification-skill` 정형 속성 검증 스킬 생성 및 결함 탐지·회귀 실증
+
+- **요청**: `/create-formal-verification-skill` 실행 (`mock-data-gen` 대상 핵심 불변식 정형 검증 스킬 생성 및 실증)
+- **수행 내용**:
+  - 검증 대상 선정: `mock-data-core`의 `DeterministicMockGenerator`(`generateTimeSeries`, `generateCurrentValues`, `quantizeCurrent`, `alignGridStart`, `buildGridTimestamps`) 4대 약속(`P1` 포인트 상한 및 64비트 오버플로 안전성, `P2` 격자 정렬 및 포함성, `P3` 슬라이딩 윈도우 연속성, `P4` 현재값 양자화 및 시계열 일치성)
+  - 도구 선택: Java 21/25 바이트코드 정형 검증기(OpenJML/KeY/JBMC)가 환경에 없어, 별도 수작업 모델 대신 컴파일된 실제 `mock-data-core` 클래스를 `java.math.BigInteger` 수학적 오라클과 생성/경계 입력으로 직접 실행하고 극단 64비트 입력을 `-Xmx64m`/2초 타임아웃 서브프로세스로 격리하는 `GridBoundsVerifier.java` + `run_verify.py` 하네스 구성 (`.cursor/skills/verify-formal-grid-bounds/`)
+  - 기준 커밋(`58860fdd517f74ac7a2eceb5636022628cbf16c4`) 실측 결과: `P2`(2,000건)·`P3`(1,000건) 통과, `P1`·`P4`에서 실제 코드 결함 7건 발견 (`maxPointsPerSensor` off-by-one 1건, `toEpochMs - fromEpochMs` 부호 있는 64비트 감산 오버플로로 인한 OOM/`IllegalArgumentException` 4건, `Long.MAX_VALUE` 부근 `alignGridStart` 오버플로 OOM 1건, `Long.MIN_VALUE` `quantizeCurrent` 언더플로 1건)
+  - 스킬 실증: `DeterministicMockGenerator.alignGridStart`를 `Math.floorDiv`로 바꾸는 스크래치 결함 주입 후 `run_verify.py` 실행 시 신규 `P2` 위반(`Emitted timestamp -11000 outside [from, to]`) 즉시 탐지 확인, 원복(`git checkout`) 후 기존 7건 기준으로 복귀 확인
+- **변경 파일**: `.cursor/skills/verify-formal-grid-bounds/SKILL.md`, `.cursor/skills/verify-formal-grid-bounds/scripts/GridBoundsVerifier.java`, `.cursor/skills/verify-formal-grid-bounds/scripts/run_verify.py`, `agent-log.md`
+
+## [2026-11-20 09:02] `DeterministicMockGenerator` 64비트 오버플로·언더플로 수정 및 정형 검증 스킬 갱신
+
+- **요청**: `DeterministicMockGenerator` P1/P4 결함 수정, 단위 테스트 추가 및 정형 검증 스킬(`verify-formal-grid-bounds`) 동기화
+- **수행 내용**:
+  - [DeterministicMockGenerator.java](mock-data-core/src/main/java/com/samsung/ees/infra/mock/core/engine/DeterministicMockGenerator.java):
+    - `generateTimeSeries`: `toEpochMs - fromEpochMs` 부호 오버플로로 가드를 우회하던 문제를 `Long.divideUnsigned(toEpochMs - fromEpochMs, effectiveInterval)` 및 `Long.compareUnsigned(..., config.maxPointsPerSensor()) > 0` 비교로 교체해 사양(`(to - from) / intervalMs <= maxPointsPerSensor`)을 유지하면서 전 구간 오버플로 차단
+    - `alignGridStart` + `buildGridTimestamps`를 `buildAlignedTimestamps`로 통합하고 `Math.floorMod`·`Long.MAX_VALUE - delta` 가드 및 `Long.divideUnsigned(toEpochMs - gridStart, intervalMs)` 기반 capacity 계산을 적용해 `Long.MAX_VALUE` 부근 오버플로 무한 루프·OOM 제거
+    - `quantizeCurrent`: `nowEpochMs < Long.MIN_VALUE + rem`일 때 64비트 언더플로 래핑 대신 `InvalidMockRequestException`을 명시적으로 발생시키도록 방어
+  - [DeterministicMockGeneratorTest.java](mock-data-core/src/test/java/com/samsung/ees/infra/mock/core/engine/DeterministicMockGeneratorTest.java): `guardsAgainst64BitOverflowAndUnderflowAtExtremeEpochBoundaries` 테스트 추가 (극단 부호 오버플로, `Long.MAX_VALUE` 경계 빈 결과/단일 점, 0을 가로지르는 대형 `intervalMs`, `Long.MIN_VALUE` 양자화 언더플로 및 1024ms 배수 통과 검증)
+  - 정형 검증 스킬 갱신([GridBoundsVerifier.java](.cursor/skills/verify-formal-grid-bounds/scripts/GridBoundsVerifier.java), [SKILL.md](.cursor/skills/verify-formal-grid-bounds/SKILL.md)): `프로젝트사양서.md` 및 `allowsExactMaxPointsRatioBoundaryWithInclusiveGridEndpoints` 계약(`maxPointsPerSensor + 1` 양 끝점 포함 허용, 초과 시 거부)과 `Long.MIN_VALUE` 언더플로 거부 규칙에 맞춰 오라클·문서 동기화, 스크래치 결함(`Long.divideUnsigned` 제거 시 4건 즉시 탐지)으로 회귀 감지 능력 재검증
+  - 최종 검증: `.\gradlew.bat clean check --console=plain` (`BUILD SUCCESSFUL`: `mock-data-core` 21, `mock-data-spring-boot-starter` 24, `example-app` 18, 총 63건 통과) 및 `python .cursor/skills/verify-formal-grid-bounds/scripts/run_verify.py` (`totalFindings: 0`, 4,032건 통과)
+- **변경 파일**: `DeterministicMockGenerator.java`, `DeterministicMockGeneratorTest.java`, `.cursor/skills/verify-formal-grid-bounds/scripts/GridBoundsVerifier.java`, `.cursor/skills/verify-formal-grid-bounds/SKILL.md`, `agent-log.md`
+
+## [2026-11-20 09:17] `verify-mock-data-gen` 나머지 3개 기능 전체 E2E 검증 완료
+
+- **요청**: 나머지 검증 진행 (`timeseries-sensor-data`, `openapi-and-error-isolation`, `profile-and-uri-isolation` 실제 구동 검증)
+- **수행 내용**:
+  - `verify-e2e-local` (`--profile local`, 최신 `DeterministicMockGenerator` 수정분 포함 `:example-app:bootJar` 재빌드·기동, `doctor` `"healthy": true`):
+    - [timeseries-sensor-data.md](.cursor/skills/verify-mock-data-gen/features/timeseries-sensor-data.md): ISO-8601 오프셋(`%2B09:00` → UTC 정규화, 6포인트), 슬라이딩 윈도우 59개 중첩 타임스탬프·값 완전 일치, Epoch ms `/current`-`/timeseries` 일치, 헤더 미포함 운영 폴백(`mock: false`, `source: "LIVE_STORE"`, `points: []`) 모두 통과
+    - [openapi-and-error-isolation.md](.cursor/skills/verify-mock-data-gen/features/openapi-and-error-isolation.md): `/v3/api-docs`의 선택적 `X-Mock-Data` 헤더 명세, `/swagger-ui/index.html` `200`, 빈 `sensorIds`·잘못된 시각·역전 범위(`from >= to`)·최소 주기 미만(`intervalMs=50`)·최대 포인트 초과 및 64비트 부호 오버플로 요청(`from=-5e18&to=5e18`) 모두 `400 Bad Request` `MockErrorResponse` 격리 응답 확인
+  - [profile-and-uri-isolation.md](.cursor/skills/verify-mock-data-gen/features/profile-and-uri-isolation.md):
+    - `verify-e2e-dev` (`--profile dev`): `doctor` 통과 및 `mock: true` 응답 확인
+    - `verify-e2e-prod` (`--profile prod`, `ees.mock.sensor.enabled=true` 강제 지정): `doctor` 통과, `X-Mock-Data: true`에도 `mock: false`·`LIVE_STORE` 라우팅 및 `/v3/api-docs` 내 `X-Mock-Data` 미노출 확인
+    - `verify-e2e-disabled` (`--profile local`, `ees.mock.sensor.enabled=false`): `doctor` 통과 및 `mock: false`·`LIVE_STORE` 확인
+    - `verify-e2e-uri` (커스텀 URI `/api/v2/telemetry/latest`, `/history`): `doctor` 통과, 커스텀 경로 `200`(`mock: true`/`false` 분기) 및 기본 `/api/v1/sensors/current` `404` 확인
+  - 모든 실행 인스턴스 `cleanup` 완료(`build/verify-runs` 잔여 프로세스·디렉터리 없음), 증거 파일 총 22건 신규 저장(기존 `verify-self-test` 6건 포함 총 28건 `artifacts/verify-mock-data-gen/` 보존)
+- **변경 파일**: `agent-log.md` (증거 아티팩트 `artifacts/verify-mock-data-gen/verify-e2e-*` 생성)
+
+## [2026-11-20 09:23] `/maintain-verification-skill` 실행 (`changed` — 기능 맵 문서 드리프트 3건 보정 및 전체 라이브 재검증 완료)
+
+- **요청**: `/maintain-verification-skill` 실행
+- **수행 내용**:
+  - 인덱스 점검(`features/README.md`와 형제 파일 4건 1:1 일치) 후 읽기 전용 `research` 서브에이전트 4개를 병렬 실행하여 `current-sensor-values.md`, `timeseries-sensor-data.md`, `profile-and-uri-isolation.md`, `openapi-and-error-isolation.md`를 최신 소스 코드(워킹 트리의 `DeterministicMockGenerator.java` 변경분 포함)와 대조
+  - 문서 드리프트/누락 보정(편집 범위: `.cursor/skills/verify-mock-data-gen/features/` 전용, 제품 코드 무수정):
+    - [openapi-and-error-isolation.md](.cursor/skills/verify-mock-data-gen/features/openapi-and-error-isolation.md): `MissingServletRequestParameterException`(`from`/`to` 누락), `MethodArgumentTypeMismatchException`(`intervalMs=abc`), `Long.compareUnsigned` 기반 64비트 극단 스팬 `400` 검증 추가; 초기 라이브 패스에서 포착된 `/v3/api-docs` 직렬화 불일치(`schema.default` 부재 → 실제 Springdoc 출력 `schema: { "type": "string", "enum": ["true"] }`) 반영
+    - [timeseries-sensor-data.md](.cursor/skills/verify-mock-data-gen/features/timeseries-sensor-data.md): `floor((to - from) / intervalMs) > maxPointsPerSensor` 비율 상한(`maxPointsPerSensor + 1` 양끝단 포함 허용), 64비트 무부호 가드, `Long.MAX_VALUE` 부근 빈 포인트 반환, `SensorController` 비정규화 동작 명시
+    - [current-sensor-values.md](.cursor/skills/verify-mock-data-gen/features/current-sensor-values.md): `SensorController` vs `MockSensorController`의 `minIntervalMs` 검증 차이 명시
+  - 라이브 검증 패스 재실행(`maintain-local`, `maintain-dev`, `maintain-prod`, `maintain-uri` 4개 인스턴스 모두 `doctor` `"healthy": true` 선행 확인 후 4개 전체 기능 구동 및 `cleanup` 완료): `MAINTAIN_LIVE_PASS_OK` (`evidenceFilesVerified: 14`, `build/verify-runs` 잔여 디렉터리 `0`)
+  - 실행 노트는 스크래치 경로(`maintain-run-notes.md`)에만 기록하고 저장소에 미포함
+- **변경 파일**: `.cursor/skills/verify-mock-data-gen/features/openapi-and-error-isolation.md`, `.cursor/skills/verify-mock-data-gen/features/timeseries-sensor-data.md`, `.cursor/skills/verify-mock-data-gen/features/current-sensor-values.md`, `agent-log.md`
+
+## [2026-11-20 13:59] PR `#10`·`#11` 분리 커밋·PR 생성 및 `main` 병합 완료
+
+- **요청**: 제품 수정분과 검증 스킬을 분리 커밋·분리 PR로 진행하고, 병합 가능 시 즉시 `main` 병합
+- **수행 내용**:
+  - **PR `#10` (`https://github.com/imoil/mock-data-gen/pull/10`, 브랜치 `fix/64bit-grid-overflow-guard`)**:
+    - `DeterministicMockGenerator.java`, `DeterministicMockGeneratorTest.java` 커밋(`21e4ac9`) 및 `/pr` 형식으로 PR 생성
+    - GitHub Actions `check`(`https://github.com/imoil/mock-data-gen/actions/runs/44677620944/job/136093113798`) 통과(`pass`, `43s`) 및 `MERGEABLE`/`CLEAN` 확인 후 `main` 병합(`5965a97`, 원격·로컬 브랜치 삭제)
+  - **PR `#11` (`https://github.com/imoil/mock-data-gen/pull/11`, 브랜치 `chore/verification-skills`)**:
+    - `verify-formal-grid-bounds/SKILL.md`의 동기화 커밋을 `5965a9761cdea206368b2ca45d4e818649a99fc0`로 갱신 후 `run_verify.py` 재실행(`totalFindings: 0`, 4,032건 통과)
+    - `.gitignore`에 `artifacts/` 추가 및 `.cursor/skills/` 전체 커밋(`3b14893`)·PR 생성
+    - GitHub Actions `check`(`https://github.com/imoil/mock-data-gen/actions/runs/44677831945/job/136093807485`) 통과(`pass`, `55s`) 및 `MERGEABLE`/`CLEAN` 확인 후 `main` 병합(`d38f4da`, 원격·로컬 브랜치 삭제)
+  - 로컬 `main` fast-forward 동기화 및 작업 트리 정리 확인
+- **변경 파일**: `.gitignore`, `.cursor/skills/verify-formal-grid-bounds/SKILL.md`, `agent-log.md` (PR `#10` `5965a97`, PR `#11` `d38f4da` `main` 병합)
