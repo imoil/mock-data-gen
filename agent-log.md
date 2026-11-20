@@ -332,3 +332,23 @@
     - GitHub Actions `check`(`https://github.com/imoil/mock-data-gen/actions/runs/44677831945/job/136093807485`) 통과(`pass`, `55s`) 및 `MERGEABLE`/`CLEAN` 확인 후 `main` 병합(`d38f4da`, 원격·로컬 브랜치 삭제)
   - 로컬 `main` fast-forward 동기화 및 작업 트리 정리 확인
 - **변경 파일**: `.gitignore`, `.cursor/skills/verify-formal-grid-bounds/SKILL.md`, `agent-log.md` (PR `#10` `5965a97`, PR `#11` `d38f4da` `main` 병합)
+
+
+## [2026-11-20 14:06] 신규 개발자 온보딩 안내서 작성
+
+- **요청**: 신규 개발자 온보딩을 위해 전체 프로젝트 설명과 로컬 빌드·실행 절차 등을 담은 온보딩 안내서 작성
+- **수행 내용**:
+  - 저장소 구성(`build.gradle`, `settings.gradle`, `README.md`, `GLOSSARY.md`, `CODING_STANDARDS.md`, `docs/adr/`, `.github/workflows/ci.yml`, 주요 Java 소스) 확인
+  - [docs/ONBOARDING.md](docs/ONBOARDING.md) 작성: 프로젝트 개요 및 핵심 동작 원리, 3개 모듈 역할, 사전 요구 사항(JDK 21+, Gradle Wrapper `9.8.2`), 저장소 구조, `clean check`·`verifyMavenPublication`·`publishToMavenLocal` 빌드 및 검증 절차, `:example-app:bootRun` 실행과 프로필별(`local`/`dev`/`prod`) `curl`·Swagger UI 확인 절차, 코드 탐색 가이드 및 협업 규칙 정리
+  - [README.md](README.md)의 `관련 문서` 목록에 `docs/ONBOARDING.md` 링크 추가
+  - 로컬 검증: `.\gradlew.bat clean check --console=plain` 통과(`:example-app:test` 18건, `:mock-data-core:test` 21건, `:mock-data-spring-boot-starter:test` 24건, `verifyMavenPublication` 포함) 및 `:example-app:bootRun --args="--server.port=18088"` 실기동으로 운영/Mock 라우팅, 시계열, `400` 오류 격리, Swagger UI(`200`), `/v3/api-docs`(`X-Mock-Data` 포함) 확인 후 프로세스 정리
+- **변경 파일**: `docs/ONBOARDING.md`, `README.md`, `agent-log.md`
+
+## [2026-11-20 15:42] PR `#12` 생성 및 `main` 병합 완료
+
+- **요청**: 온보딩 안내서 변경사항(`docs/ONBOARDING.md`, `README.md`)을 바로 병합
+- **수행 내용**:
+  - `docs/onboarding-guide` 브랜치에서 `docs/ONBOARDING.md`와 `README.md` 커밋(`de9461a`) 및 PR `#12`(`https://github.com/imoil/mock-data-gen/pull/12`) 생성
+  - GitHub Actions `check`(`https://github.com/imoil/mock-data-gen/actions/runs/44689511928/job/136131691390`) 통과(`pass`, `49s`) 및 `MERGEABLE`/`CLEAN` 확인 후 `main` 병합(`de37c85`, 원격·로컬 브랜치 삭제)
+  - 로컬 `main` fast-forward 동기화 및 `agent-log.md` 누적 기록 반영
+- **변경 파일**: `docs/ONBOARDING.md`, `README.md`, `agent-log.md` (PR `#12` `de37c85` `main` 병합)
