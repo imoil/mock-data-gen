@@ -352,3 +352,23 @@
   - GitHub Actions `check`(`https://github.com/imoil/mock-data-gen/actions/runs/44689511928/job/136131691390`) 통과(`pass`, `49s`) 및 `MERGEABLE`/`CLEAN` 확인 후 `main` 병합(`de37c85`, 원격·로컬 브랜치 삭제)
   - 로컬 `main` fast-forward 동기화 및 `agent-log.md` 누적 기록 반영
 - **변경 파일**: `docs/ONBOARDING.md`, `README.md`, `agent-log.md` (PR `#12` `de37c85` `main` 병합)
+
+## [2026-11-20 15:48] `/poteto-mode` `ego-browser` 기반 `example-app` 실브라우저 동작 점검
+
+- **요청**: `/poteto-mode` + 브라우저(`ego-browser`)를 사용하여 `example-app`의 실제 동작 점검 진행
+- **수행 내용**:
+  - `.\gradlew.bat :example-app:bootRun`으로 `example-app`(`sensor-example-app`, `local` 프로필, 포트 `8080`) 기동 확인
+  - `ego-browser`(`taskSpace(1)`)로 `http://localhost:8080/swagger-ui.html` 접속 및 `/swagger-ui/index.html` 렌더링 확인
+  - `/v3/api-docs` (`200 OK`) 내 `/api/v1/sensors/current`, `/api/v1/sensors/timeseries` 오퍼레이션 및 선택적 `X-Mock-Data` 헤더 파라미터(`enum: ["true"]`, `example: "true"`) 노출 확인
+  - Swagger UI에서 두 엔드포인트의 `Try it out` -> `sensorIds=TEMP-01` 입력 -> `Execute` 직접 실행으로 `200 OK` 및 `mock: true` 응답 확인
+  - 브라우저 컨텍스트(`page.fetch()`)로 운영 폴백(헤더 미포함·`X-Mock-Data: false` 시 `mock: false`, `source: "LIVE_STORE"`), Mock 결정론(`/timeseries` 2회 호출 바이트 단위 동일), 400 입력 검증(`bad-time`, `from > to`, `intervalMs=10`) 확인
+  - `task.finish({ keep: [] })`로 브라우저 작업 공간 종료 및 백그라운드 `example-app` 프로세스 정리(`8080` 포트 해제 확인)
+- **변경 파일**: `agent-log.md`
+
+## [2026-11-20 15:50] `agent-log.md` 커밋 및 `origin/main` 푸시
+
+- **요청**: 현재 변경 사항 병합 및 푸시
+- **수행 내용**:
+  - `git status`, `git branch -a`, `gh pr list` 확인 결과 오픈 PR이나 미병합 로컬 브랜치 없이 `main` 브랜치에 `agent-log.md` 변경분만 존재함을 확인
+  - 직전 `example-app` 실브라우저 점검 이력 및 현재 턴 이력을 포함한 `agent-log.md`를 커밋 후 `origin/main`으로 푸시
+- **변경 파일**: `agent-log.md`
