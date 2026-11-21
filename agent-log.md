@@ -402,3 +402,13 @@
   - [.github/workflows/docs-toc.yml](.github/workflows/docs-toc.yml) 추가: `main` `push`·`pull_request`(`docs/**`, `scripts/generate_docs_toc.py`) 및 `workflow_dispatch`에서 테스트 실행 후 `docs/index.html` 자동 커밋·푸시 및 `POST repos/{owner}/{repo}/pages/builds` 트리거(포크 PR은 `--check` 전용)
   - [.gitignore](.gitignore)에 `__pycache__/`, `*.py[cod]` 추가 및 `ego-browser` + 로컬 `http.server`(`127.0.0.1:18192`)로 초기 9건 렌더링, 카테고리 필터(`adr` 3건), 검색(`Swimlane` 1건·빈 상태), 모바일 뷰포트(`375×812`) 오버플로 없음, 다이어그램 링크 이동 및 브라우저 오류 `0`건 확인
 - **변경 파일**: `docs/index.html`, `scripts/generate_docs_toc.py`, `scripts/test_generate_docs_toc.py`, `.github/workflows/docs-toc.yml`, `.gitignore`, `agent-log.md`
+
+## [2026-11-21 23:24] `docs/index.html` 및 `docs-toc.yml` `origin/main` 커밋·푸시 및 라이브 GH Pages 검증 완료
+
+- **요청**: 변경 사항 커밋·푸시 및 배포 진행
+- **수행 내용**:
+  - `.gitignore`, `.github/workflows/docs-toc.yml`, `scripts/generate_docs_toc.py`, `scripts/test_generate_docs_toc.py`, `docs/index.html`, `agent-log.md`를 `main`에 커밋·푸시(`404ac08`)
+  - 첫 `docs-toc.yml` 실행(`44913569944`)에서 `if: !(...)`의 선행 `!`가 YAML 태그로 파싱되어 실패한 원인을 확인하고, `if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true`로 수정 후 `04bcbbb`로 푸시
+  - GitHub Actions 3개 워크플로 모두 통과 확인: `Docs ToC` (`44913677567`, 6s), `CI` (`44913674347`, 37s), `pages-build-deployment` (`44913673868`)
+  - `curl.exe -sI https://imoil.github.io/mock-data-gen/` (`HTTP/1.1 200 OK`) 및 `ego-browser` 라이브 접속 검증(`totalCount: "9"`, `cardCount: 9`, `previewNoteVisible: false`, `ONBOARDING.html` 링크 이동 확인) 완료
+- **변경 파일**: `agent-log.md`, `.github/workflows/docs-toc.yml` (커밋 `404ac08`, `04bcbbb` `origin/main` 푸시)
