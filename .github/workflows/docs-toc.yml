@@ -1,0 +1,74 @@
+name: Docs ToC
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'scripts/generate_docs_toc.py'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'scripts/generate_docs_toc.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: docs-toc-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  docs-toc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.DOCS_TOC_TOKEN || github.token }}
+          ref: ${{ github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork && github.head_ref || '' }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run ToC generator unit tests
+        run: python3 -m unittest discover -s scripts -p "test_*.py" -v
+
+      - name: Verify docs/index.html on forked PR
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
+        run: python3 scripts/generate_docs_toc.py --check
+
+      - name: Update and push docs/index.html
+        id: update_toc
+        if: !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true)
+        run: |
+          python3 scripts/generate_docs_toc.py
+          if [ -n "$(git status --porcelain -- docs/index.html)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/index.html
+            git commit -m "docs(toc): update docs/index.html [skip ci]"
+            git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger GitHub Pages build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.update_toc.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_TOC_TOKEN || github.token }}
+        run: |
+          if ! gh api --method POST "repos/${{ github.repository }}/pages/builds"; then
+            echo "::warning::Could not trigger GitHub Pages build; configure DOCS_TOC_TOKEN if GITHUB_TOKEN lacks legacy Pages build permission."
+            {
+              echo "### GitHub Pages Build Trigger Warning"
+              echo ""
+              echo "Could not trigger \`POST repos/${{ github.repository }}/pages/builds\`. Configure the \`DOCS_TOC_TOKEN\` repository secret if \`GITHUB_TOKEN\` cannot trigger legacy Pages builds."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

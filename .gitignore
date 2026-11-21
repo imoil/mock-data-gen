@@ -22,3 +22,7 @@ gradle-app.setting
 
 # Local verification proof artifacts
 artifacts/
+
+# Python bytecode cache
+__pycache__/
+*.py[cod]

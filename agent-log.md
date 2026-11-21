@@ -390,3 +390,15 @@
   - `docs/diagrams/agent-workflow-swimlane.html`, `docs/diagrams/agent-workflow-process.html`, `agent-log.md` 스테이징 및 커밋
   - `origin/main` 원격 저장소로 푸시 완료 및 작업 트리 정리 확인
 - **변경 파일**: `docs/diagrams/agent-workflow-swimlane.html`, `docs/diagrams/agent-workflow-process.html`, `agent-log.md`
+
+## [2026-11-21 23:18] `/poteto-mode` `docs/index.html` 문서 허브 및 ToC 자동 갱신 워크플로우 구현
+
+- **요청**: GH Pages로 배포 중인 `docs/` 경로의 문서 목록이 보이도록 `docs/index.html`을 추가하고, `docs/` 하위 파일 추가 시 자동으로 ToC를 갱신하도록 구성
+- **수행 내용**:
+  - `gh api repos/imoil/mock-data-gen/pages` 및 라이브 URL 확인으로 `build_type: legacy`(`main /docs`), `https://imoil.github.io/mock-data-gen/` 404(루트 `index.html` 부재) 및 기존 `.md` → `.html` Jekyll 렌더링·`.html` 정적 서빙 동작 확인
+  - [scripts/generate_docs_toc.py](scripts/generate_docs_toc.py) 작성: Python 3 표준 라이브러리 전용으로 `docs/` 재귀 스캔(`TocEntry`, `TocSection`, `.md`/`.html` 파서 디스패치, 섹션 메타데이터 레지스트리 및 미등록 폴더 폴백), `<!-- TOC:START -->`~`<!-- TOC:END -->` 및 `<!-- TOC_COUNT:START -->`~`<!-- TOC_COUNT:END -->` 마커 기반 멱등 갱신 및 `--check` 검증 모드 구현
+  - [scripts/test_generate_docs_toc.py](scripts/test_generate_docs_toc.py) 작성: 중첩·신규 디렉터리 탐색, 제목/요약 추출·HTML 이스케이프, 멱등성, `--check` 실패·통과 동작 4건 검증 (`python -m unittest discover -s scripts -p "test_*.py" -v` 통과)
+  - [docs/index.html](docs/index.html) 생성: YAML frontmatter 없는 정적 HTML(`lang="ko"`), `docs/diagrams/agent-workflow-process.html` 팔레트·타이포그래피 반영, 현재 9개 문서 ToC 반영, 검색·카테고리 필터·로컬 미리보기(`.md` 원문 연결) 지원
+  - [.github/workflows/docs-toc.yml](.github/workflows/docs-toc.yml) 추가: `main` `push`·`pull_request`(`docs/**`, `scripts/generate_docs_toc.py`) 및 `workflow_dispatch`에서 테스트 실행 후 `docs/index.html` 자동 커밋·푸시 및 `POST repos/{owner}/{repo}/pages/builds` 트리거(포크 PR은 `--check` 전용)
+  - [.gitignore](.gitignore)에 `__pycache__/`, `*.py[cod]` 추가 및 `ego-browser` + 로컬 `http.server`(`127.0.0.1:18192`)로 초기 9건 렌더링, 카테고리 필터(`adr` 3건), 검색(`Swimlane` 1건·빈 상태), 모바일 뷰포트(`375×812`) 오버플로 없음, 다이어그램 링크 이동 및 브라우저 오류 `0`건 확인
+- **변경 파일**: `docs/index.html`, `scripts/generate_docs_toc.py`, `scripts/test_generate_docs_toc.py`, `.github/workflows/docs-toc.yml`, `.gitignore`, `agent-log.md`

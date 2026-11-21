@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mock-data-gen 문서 허브</title>
+  <meta name="description" content="mock-data-gen 저장소의 온보딩 안내서, ADR, 에이전트 규칙, 아키텍처 다이어그램을 탐색하는 정적 문서 목차입니다.">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --paper: #f5f5f5;
+      --surface: #ffffff;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #5a6580;
+      --accent: #bf4520;
+      --accent-tint: rgba(191, 69, 32, 0.08);
+      --rule: rgba(45, 49, 66, 0.12);
+      --rule-strong: rgba(45, 49, 66, 0.22);
+      --sans: 'Geist', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+      --radius: 8px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--sans);
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(45, 49, 66, 0.08) 0.8px, transparent 0.8px);
+      background-size: 22px 22px;
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 3rem 1.5rem 4rem;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .site-header {
+      border-bottom: 1px solid var(--rule-strong);
+      padding-bottom: 1.75rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(1.75rem, 2.8vw + 0.75rem, 2.35rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.18;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+
+    .lead {
+      font-size: 0.95rem;
+      color: var(--muted);
+      max-width: 62ch;
+    }
+
+    .header-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--rule-strong);
+      border-radius: 6px;
+      padding: 0.45rem 0.85rem;
+      text-decoration: none;
+      transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .repo-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-tint);
+    }
+
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .count-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .count-pill strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1 1 280px;
+    }
+
+    .search-input {
+      width: 100%;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius);
+      padding: 0.65rem 0.95rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-input::placeholder {
+      color: var(--soft);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-tint);
+    }
+
+    .filter-status {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--rule-strong);
+      color: var(--ink);
+    }
+
+    .filter-btn[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .toc-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 2.25rem;
+    }
+
+    .toc-section[hidden] {
+      display: none;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .section-count {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .entry-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.65rem;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 1.05rem 1.15rem;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .entry-card[hidden] {
+      display: none;
+    }
+
+    .entry-card:hover {
+      border-color: rgba(191, 69, 32, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .entry-title {
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .entry-link {
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .entry-link:hover {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .entry-summary {
+      font-size: 0.86rem;
+      color: var(--muted);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .entry-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid var(--rule);
+      margin-top: auto;
+    }
+
+    .entry-path {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--soft);
+      word-break: break-all;
+    }
+
+    .entry-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .format-badge {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid var(--rule);
+      color: var(--muted);
+      background: var(--paper);
+    }
+
+    .format-html {
+      color: var(--accent);
+      background: var(--accent-tint);
+      border-color: rgba(191, 69, 32, 0.25);
+    }
+
+    .entry-source-link {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .entry-source-link:hover {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .empty-state {
+      background: var(--surface);
+      border: 1px dashed var(--rule-strong);
+      border-radius: var(--radius);
+      padding: 2rem 1.25rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .empty-state[hidden] {
+      display: none;
+    }
+
+    .site-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      color: var(--soft);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 2rem 1rem 3rem;
+      }
+
+      .entry-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+      }
+
+      .entry-card:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <div class="header-top">
+        <div>
+          <p class="eyebrow">Documentation Hub · mock-data-gen</p>
+          <h1>mock-data-gen 문서 허브</h1>
+          <p class="lead">온보딩 안내서, 아키텍처 결정 기록(ADR), 에이전트 협업 규칙 및 워크플로우 다이어그램을 한곳에서 탐색합니다.</p>
+        </div>
+        <nav class="header-links" aria-label="저장소 링크">
+          <a class="repo-link" href="https://github.com/imoil/mock-data-gen" target="_blank" rel="noopener noreferrer">GitHub 저장소</a>
+        </nav>
+      </div>
+      <div class="summary-bar">
+        <span class="count-pill">등록 문서 <strong><!-- TOC_COUNT:START --><span id="total-count" data-doc-count="9">9</span><!-- TOC_COUNT:END --></strong>건</span>
+        <span id="preview-mode-note" hidden>로컬 미리보기 모드: Markdown 항목 클릭 시 원문(.md)을 엽니다.</span>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="문서 검색 및 분류">
+      <div class="search-row">
+        <div class="search-wrapper">
+          <input
+            id="doc-search"
+            class="search-input"
+            type="search"
+            placeholder="제목, 요약 또는 파일 경로로 검색"
+            aria-label="문서 검색"
+            autocomplete="off"
+          >
+        </div>
+        <p id="filter-status" class="filter-status" aria-live="polite"></p>
+      </div>
+      <div id="category-filters" class="category-filters" role="group" aria-label="카테고리 필터"></div>
+    </section>
+
+    <main id="toc-root" class="toc-sections">
+      <!-- TOC:START -->
+      <section class="toc-section" data-section="" data-section-title="개요 및 온보딩">
+        <div class="section-header">
+          <h2 class="section-title">개요 및 온보딩</h2>
+          <span class="section-count" data-section-count="1">1개 문서</span>
+        </div>
+        <div class="entry-grid">
+        <article class="entry-card" data-section="" data-search="신규 개발자 온보딩 안내서 mock-data-gen은 데이터베이스나 캐시 없이 sensorid와 시각만으로 결정론적 센서 측정값을 생성하는 gradle 멀티 프로젝트다. 이 문서는 전체 구조, 로컬 빌드와 검증 절차, example-app 실행과 api 확인 방법, 개발 규칙을 안내한다. onboarding.md onboarding.html 개요 및 온보딩">
+          <h3 class="entry-title"><a class="entry-link" href="ONBOARDING.html" data-source-href="ONBOARDING.md" data-format="md">신규 개발자 온보딩 안내서</a></h3>
+          <p class="entry-summary">mock-data-gen은 데이터베이스나 캐시 없이 SensorId와 시각만으로 결정론적 센서 측정값을 생성하는 Gradle 멀티 프로젝트다. 이 문서는 전체 구조, 로컬 빌드와 검증 절차, example-app 실행과 API 확인 방법, 개발 규칙을 안내한다.</p>
+          <div class="entry-meta">
+            <span class="entry-path">ONBOARDING.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="ONBOARDING.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        </div>
+      </section>
+      <section class="toc-section" data-section="adr" data-section-title="아키텍처 결정 기록 (ADR)">
+        <div class="section-header">
+          <h2 class="section-title">아키텍처 결정 기록 (ADR)</h2>
+          <span class="section-count" data-section-count="3">3개 문서</span>
+        </div>
+        <div class="entry-grid">
+        <article class="entry-card" data-section="adr" data-search="0001. 3-모듈 라이브러리 경계 분리 (core / spring boot starter / example app) mock data 생성 라이브러리를 외부 프로젝트가 다양한 형태(순수 java 또는 spring boot 웹 애플리케이션)로 참조할 수 있도록 gradle 멀티 프로젝트를 mock-data-core, mock-data-spring-boot-starter, example-app 3개 모듈로 분리한다. adr/0001-multi-module-library-boundary.md adr/0001-multi-module-library-boundary.html 아키텍처 결정 기록 (adr)">
+          <h3 class="entry-title"><a class="entry-link" href="adr/0001-multi-module-library-boundary.html" data-source-href="adr/0001-multi-module-library-boundary.md" data-format="md">0001. 3-모듈 라이브러리 경계 분리 (Core / Spring Boot Starter / Example App)</a></h3>
+          <p class="entry-summary">Mock data 생성 라이브러리를 외부 프로젝트가 다양한 형태(순수 Java 또는 Spring Boot 웹 애플리케이션)로 참조할 수 있도록 Gradle 멀티 프로젝트를 mock-data-core, mock-data-spring-boot-starter, example-app 3개 모듈로 분리한다.</p>
+          <div class="entry-meta">
+            <span class="entry-path">adr/0001-multi-module-library-boundary.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="adr/0001-multi-module-library-boundary.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        <article class="entry-card" data-section="adr" data-search="0002. 결정론적 노이즈 입력 통일 및 starter 설정 커스터마이징 프로젝트사양서.md 4.2절 수식(doubletolongbits(t_sec))과 6.2절 레퍼런스 코드(sensorseed ^ timestampms) 간의 노이즈 해시 입력 불일치를 6.2절 기준으로 통일하고, starter 설정 프리픽스(app-custom-config.mock.sensor.*) 및 엔드포인트 uri를 외부 프로젝트 규칙에 맞게 변경할 수 있도록 설계한다. adr/0002-deterministic-noise-and-starter-customization.md adr/0002-deterministic-noise-and-starter-customization.html 아키텍처 결정 기록 (adr)">
+          <h3 class="entry-title"><a class="entry-link" href="adr/0002-deterministic-noise-and-starter-customization.html" data-source-href="adr/0002-deterministic-noise-and-starter-customization.md" data-format="md">0002. 결정론적 노이즈 입력 통일 및 Starter 설정 커스터마이징</a></h3>
+          <p class="entry-summary">프로젝트사양서.md 4.2절 수식(doubleToLongBits(t_sec))과 6.2절 레퍼런스 코드(sensorSeed ^ timestampMs) 간의 노이즈 해시 입력 불일치를 6.2절 기준으로 통일하고, Starter 설정 프리픽스(app-custom-config.mock.sensor.*) 및 엔드포인트 URI를 외부 프로젝트 규칙에 맞게 변경할 수 있도록 설계한다.</p>
+          <div class="entry-meta">
+            <span class="entry-path">adr/0002-deterministic-noise-and-starter-customization.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="adr/0002-deterministic-noise-and-starter-customization.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        <article class="entry-card" data-section="adr" data-search="0003. starter 라이브러리(ees.mock.sensor.*)와 컨슈머 앱(app-custom-config.*) 프로퍼티 프리픽스 분리 adr-0002에서 starter 설정 프리픽스를 app-custom-config.mock.sensor.*로 지정했으나, app-custom-config.*는 본래 컨슈머 애플리케이션이 외부 의존성 설정과 분리해 관리하는 앱 고유 네임스페이스였다. 그 결과 example-app의 운영 컨트롤러와 starter 설정이 동일 네임스페이스에 섞이는 역방향 결합이 발생했다. 따라서 mock-data-spring-boot-starter의 모든 프로퍼티는 라이브러리 고유 프리픽스 ees.mock.sensor.*로 분리하고, example-app은 컨슈머 앱 고유 설정으로 app-custom-config.sensor.*를 사용하도록 분리한다. adr/0003-starter-property-prefix-separation.md adr/0003-starter-property-prefix-separation.html 아키텍처 결정 기록 (adr)">
+          <h3 class="entry-title"><a class="entry-link" href="adr/0003-starter-property-prefix-separation.html" data-source-href="adr/0003-starter-property-prefix-separation.md" data-format="md">0003. Starter 라이브러리(ees.mock.sensor.*)와 컨슈머 앱(app-custom-config.*) 프로퍼티 프리픽스 분리</a></h3>
+          <p class="entry-summary">ADR-0002에서 Starter 설정 프리픽스를 app-custom-config.mock.sensor.*로 지정했으나, app-custom-config.*는 본래 컨슈머 애플리케이션이 외부 의존성 설정과 분리해 관리하는 앱 고유 네임스페이스였다. 그 결과 example-app의 운영 컨트롤러와 Starter 설정이 동일 네임스페이스에 섞이는 역방향 결합이 발생했다. 따라서 mock-data-spring-boot-starter의 모든 프로퍼티는 라이브러리 고유 프리픽스 ees.mock.sensor.*로 분리하고, example-app은 컨슈머 앱 고유 설정으로 app-custom-config.sensor.*를 사용하도록 분리한다.</p>
+          <div class="entry-meta">
+            <span class="entry-path">adr/0003-starter-property-prefix-separation.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="adr/0003-starter-property-prefix-separation.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        </div>
+      </section>
+      <section class="toc-section" data-section="agents" data-section-title="에이전트 작업 규칙">
+        <div class="section-header">
+          <h2 class="section-title">에이전트 작업 규칙</h2>
+          <span class="section-count" data-section-count="3">3개 문서</span>
+        </div>
+        <div class="entry-grid">
+        <article class="entry-card" data-section="agents" data-search="domain docs how the engineering skills should consume this repo&#x27;s domain documentation when exploring the codebase. agents/domain.md agents/domain.html 에이전트 작업 규칙">
+          <h3 class="entry-title"><a class="entry-link" href="agents/domain.html" data-source-href="agents/domain.md" data-format="md">Domain Docs</a></h3>
+          <p class="entry-summary">How the engineering skills should consume this repo&#x27;s domain documentation when exploring the codebase.</p>
+          <div class="entry-meta">
+            <span class="entry-path">agents/domain.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="agents/domain.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        <article class="entry-card" data-section="agents" data-search="issue tracker: github issues and specs for this repo live as github issues. use the gh cli for all operations. agents/issue-tracker.md agents/issue-tracker.html 에이전트 작업 규칙">
+          <h3 class="entry-title"><a class="entry-link" href="agents/issue-tracker.html" data-source-href="agents/issue-tracker.md" data-format="md">Issue tracker: GitHub</a></h3>
+          <p class="entry-summary">Issues and specs for this repo live as GitHub issues. Use the gh CLI for all operations.</p>
+          <div class="entry-meta">
+            <span class="entry-path">agents/issue-tracker.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="agents/issue-tracker.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        <article class="entry-card" data-section="agents" data-search="triage labels the skills speak in terms of five canonical triage roles. this file maps those roles to the actual label strings used in this repo&#x27;s issue tracker. agents/triage-labels.md agents/triage-labels.html 에이전트 작업 규칙">
+          <h3 class="entry-title"><a class="entry-link" href="agents/triage-labels.html" data-source-href="agents/triage-labels.md" data-format="md">Triage Labels</a></h3>
+          <p class="entry-summary">The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label strings used in this repo&#x27;s issue tracker.</p>
+          <div class="entry-meta">
+            <span class="entry-path">agents/triage-labels.md</span>
+            <span class="entry-actions">
+              <span class="format-badge format-md">MD</span>
+              <a class="entry-source-link" href="agents/triage-labels.md">원문 (.md)</a>
+            </span>
+          </div>
+        </article>
+        </div>
+      </section>
+      <section class="toc-section" data-section="diagrams" data-section-title="아키텍처 다이어그램">
+        <div class="section-header">
+          <h2 class="section-title">아키텍처 다이어그램</h2>
+          <span class="section-count" data-section-count="2">2개 문서</span>
+        </div>
+        <div class="entry-grid">
+        <article class="entry-card" data-section="diagrams" data-search="에이전트 기반 개발 7단계 프로세스 · process 각 단계별 담당 주체, 입·출력 산출물 흐름 및 사용 스킬·도구 매핑 diagrams/agent-workflow-process.html diagrams/agent-workflow-process.html 아키텍처 다이어그램">
+          <h3 class="entry-title"><a class="entry-link" href="diagrams/agent-workflow-process.html" data-format="html">에이전트 기반 개발 7단계 프로세스 · Process</a></h3>
+          <p class="entry-summary">각 단계별 담당 주체, 입·출력 산출물 흐름 및 사용 스킬·도구 매핑</p>
+          <div class="entry-meta">
+            <span class="entry-path">diagrams/agent-workflow-process.html</span>
+            <span class="entry-actions">
+              <span class="format-badge format-html">HTML</span>
+            </span>
+          </div>
+        </article>
+        <article class="entry-card" data-section="diagrams" data-search="에이전트 협업 프로젝트 워크플로우 · swimlane agent-log.md 기반 신규 개발자 안내 · 스킬 초기화, 설계 의사결정, github/ghes 협동 및 검증 흐름 diagrams/agent-workflow-swimlane.html diagrams/agent-workflow-swimlane.html 아키텍처 다이어그램">
+          <h3 class="entry-title"><a class="entry-link" href="diagrams/agent-workflow-swimlane.html" data-format="html">에이전트 협업 프로젝트 워크플로우 · Swimlane</a></h3>
+          <p class="entry-summary">agent-log.md 기반 신규 개발자 안내 · 스킬 초기화, 설계 의사결정, GitHub/GHES 협동 및 검증 흐름</p>
+          <div class="entry-meta">
+            <span class="entry-path">diagrams/agent-workflow-swimlane.html</span>
+            <span class="entry-actions">
+              <span class="format-badge format-html">HTML</span>
+            </span>
+          </div>
+        </article>
+        </div>
+      </section>
+      <!-- TOC:END -->
+      <p id="empty-filter-state" class="empty-state" hidden>검색어 또는 선택한 카테고리에 해당하는 문서가 없습니다.</p>
+    </main>
+
+    <footer class="site-footer">
+      <span>scripts/generate_docs_toc.py로 자동 생성된 정적 목차</span>
+      <span>GitHub Pages · main /docs</span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const searchInput = document.getElementById('doc-search');
+      const filtersContainer = document.getElementById('category-filters');
+      const statusEl = document.getElementById('filter-status');
+      const emptyEl = document.getElementById('empty-filter-state');
+      const previewNote = document.getElementById('preview-mode-note');
+      const sections = Array.from(document.querySelectorAll('.toc-section'));
+      const cards = Array.from(document.querySelectorAll('.entry-card'));
+
+      const isLocalPreview =
+        window.location.protocol === 'file:' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '::1';
+
+      if (isLocalPreview) {
+        if (previewNote) {
+          previewNote.hidden = false;
+        }
+        document.querySelectorAll('a.entry-link[data-source-href]').forEach(function (link) {
+          const sourceHref = link.getAttribute('data-source-href');
+          if (!sourceHref) {
+            return;
+          }
+          link.setAttribute('href', sourceHref);
+        });
+      }
+
+      let activeSection = '__all__';
+
+      function createFilterButton(key, label, count) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'filter-btn';
+        button.dataset.sectionKey = key;
+        button.setAttribute('aria-pressed', key === activeSection ? 'true' : 'false');
+        button.textContent = label + ' (' + count + ')';
+        button.addEventListener('click', function () {
+          activeSection = key;
+          updateFilterButtons();
+          applyFilters();
+        });
+        return button;
+      }
+
+      function buildCategoryButtons() {
+        filtersContainer.innerHTML = '';
+        filtersContainer.appendChild(createFilterButton('__all__', '전체', cards.length));
+        sections.forEach(function (section) {
+          const key = section.getAttribute('data-section') || '';
+          const title = section.getAttribute('data-section-title') || key;
+          const count = section.querySelectorAll('.entry-card').length;
+          filtersContainer.appendChild(createFilterButton(key, title, count));
+        });
+      }
+
+      function updateFilterButtons() {
+        filtersContainer.querySelectorAll('.filter-btn').forEach(function (btn) {
+          btn.setAttribute('aria-pressed', btn.dataset.sectionKey === activeSection ? 'true' : 'false');
+        });
+      }
+
+      function applyFilters() {
+        const query = (searchInput.value || '').trim().toLowerCase();
+        let visibleTotal = 0;
+
+        sections.forEach(function (section) {
+          const sectionKey = section.getAttribute('data-section') || '';
+          const sectionMatches = activeSection === '__all__' || sectionKey === activeSection;
+          const sectionCards = Array.from(section.querySelectorAll('.entry-card'));
+          let visibleInSection = 0;
+
+          sectionCards.forEach(function (card) {
+            const haystack = card.getAttribute('data-search') || '';
+            const queryMatches = !query || haystack.indexOf(query) !== -1;
+            const visible = sectionMatches && queryMatches;
+            card.hidden = !visible;
+            if (visible) {
+              visibleInSection += 1;
+              visibleTotal += 1;
+            }
+          });
+
+          section.hidden = visibleInSection === 0;
+        });
+
+        emptyEl.hidden = visibleTotal > 0;
+        if (query || activeSection !== '__all__') {
+          statusEl.textContent = '표시 중: ' + visibleTotal + ' / ' + cards.length + '건';
+        } else {
+          statusEl.textContent = '전체 ' + cards.length + '건';
+        }
+      }
+
+      buildCategoryButtons();
+      applyFilters();
+      searchInput.addEventListener('input', applyFilters);
+    })();
+  </script>
+</body>
+</html>
