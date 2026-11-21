@@ -45,7 +45,7 @@ jobs:
 
       - name: Update and push docs/index.html
         id: update_toc
-        if: !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true
         run: |
           python3 scripts/generate_docs_toc.py
           if [ -n "$(git status --porcelain -- docs/index.html)" ]; then
